@@ -45,7 +45,7 @@ CRS= QgsCoordinateReferenceSystem('EPSG:3116')
 params = {'EXPRESSION': Expresion,'LAYERS':[CoberturaReclass],'CELLSIZE':0,'EXTENT': "%f,%f,%f,%f"% (xmin, xmax, ymin, ymax),'CRS': CRS,'OUTPUT': Output}
 processing.run(alg,params)
 
-LSI=QgsRasterLayer(data_path+'/Resultados/LSI.tif', "lSI")
+LSI=QgsRasterLayer(data_path+'/Resultados/LSI.tif', "LSI")
 QgsProject.instance().addMapLayer(LSI)
 
 #Se obtienen las estadísticas zonales de los resultados LSI.
@@ -174,12 +174,12 @@ fig.savefig(data_path+'/Resultados/Curva_Exito.jpg')
 alg="native:reclassifybylayer"
 RasterReclass = data_path+'/Resultados/LSI.tif'
 Tabla = data_path+'/Pre_Proceso/DF_LSI.csv'
-Salida = data_path+'/Resultados/SusceptibilidadReclass.tif'
+Salida = data_path+'/Resultados/Susceptibilidad_Deslizamientos.tif'
 params={'INPUT_RASTER':RasterReclass,'RASTER_BAND':1,'INPUT_TABLE':Tabla,'MIN_FIELD':'LSI_De','MAX_FIELD':'LSI_Hasta'
         ,'VALUE_FIELD':'Categoria','NO_DATA':-9999,'RANGE_BOUNDARIES':0,'NODATA_FOR_MISSING':False,'DATA_TYPE':5,'OUTPUT':Salida}
 processing.run(alg,params)
 
-iface.addRasterLayer(data_path+'/Resultados/SusceptibilidadReclass.tif',"Raster")
+iface.addRasterLayer(data_path+'/Resultados/Susceptibilidad_Deslizamientos.tif',"Susceptibilidad_Deslizamientos")
 
 
 
