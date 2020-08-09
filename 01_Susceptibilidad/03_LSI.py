@@ -19,32 +19,47 @@ Pixel = QInputDialog.getDouble(None, 'CELLSIZE', 'Introduce el tamaño del pixel
 cellsize = Pixel[0]
 
 # Capas raster reclasificadas con su respectivo Wf
-PendientesReclass = QgsRasterLayer(data_path + '/Resultados/PendientesWf.tif', "PendientesReclass")
-QgsProject.instance().addMapLayer(PendientesReclass)
-# CoberturaReclass=QgsRasterLayer(data_path + '/Resultados/CoberturaWf.tif', "CoberturaReclass")
-# QgsProject.instance().addMapLayer(CoberturaReclass)
-GeomorfoReclass = QgsRasterLayer(data_path + '/Resultados/GeomorfoWf.tif', "GeomorfoReclass")
-QgsProject.instance().addMapLayer(GeomorfoReclass)
-UgsReclass = QgsRasterLayer(data_path + '/Resultados/UgsWf.tif', "UgsReclass")
-QgsProject.instance().addMapLayer(UgsReclass)
-CoberturayUsosReclass = QgsRasterLayer(data_path + '/Resultados/CoberturayUsosWf.tif', "CoberturayUsosReclass")
-QgsProject.instance().addMapLayer(CoberturayUsosReclass)
-CurvaturaReclass = QgsRasterLayer(data_path + '/Resultados/CurvaturaWf.tif', "CurvaturaReclass")
-QgsProject.instance().addMapLayer(CurvaturaReclass)
+Ruta_Pendiente = data_path + '/Resultados/Wf_Pendiente.tif'
+Wf_Pendiente = QgsRasterLayer(Ruta_Pendiente, "Wf_Pendiente")
+QgsProject.instance().addMapLayer(Wf_Pendiente)
+
+Ruta_SubunidadesGeomorf = data_path + '/Resultados/Wf_SubunidadesGeomorf.tif'
+Wf_SubunidadesGeomorf = QgsRasterLayer(Ruta_SubunidadesGeomorf, "Wf_SubunidadesGeomorf")
+QgsProject.instance().addMapLayer(Wf_SubunidadesGeomorf)
+
+Ruta_UGS = data_path + '/Resultados/Wf_UGS.tif'
+Wf_UGS = QgsRasterLayer(Ruta_UGS, "Wf_UGS")
+QgsProject.instance().addMapLayer(Wf_UGS)
+
+Ruta_CoberturaUso = data_path + '/Resultados/Wf_CoberturaUso.tif'
+Wf_CoberturaUso = QgsRasterLayer(Ruta_CoberturaUso, "Wf_CoberturaUso")
+QgsProject.instance().addMapLayer(Wf_CoberturaUso)
+
+Ruta_CurvaturaPlano = data_path + '/Resultados/Wf_CurvaturaPlano.tif'
+Wf_CurvaturaPlano = QgsRasterLayer(Ruta_CurvaturaPlano, "Wf_CurvaturaPlano")
+QgsProject.instance().addMapLayer(Wf_CurvaturaPlano)
+
+Ruta_CambioCobertura = data_path + '/Resultados/Wf_CambioCobertura.tif'
 
 # Dirección del resultado de la suma de los Wf
 Output = data_path + '/Resultados/LSI.tif'
 
+if os.path.isfile(Ruta_CambioCobertura) is True:
+    Wf_CambioCobertura = QgsRasterLayer(Ruta_CambioCobertura, "Wf_CambioCobertura")
+    QgsProject.instance().addMapLayer(Wf_CambioCobertura)
+    Expresion = '\"Wf_CoberturaUso@1\" + \"Wf_CurvaturaPlano@1\" + \"Wf_SubunidadesGeomorf@1\" + \"Wf_Pendiente@1\" + \"Wf_UGS@1\" + \"Wf_CambioCobertura@1\"'
+else: 
+    Expresion = '\"Wf_CoberturaUso@1\" + \"Wf_CurvaturaPlano@1\" + \"Wf_SubunidadesGeomorf@1\" + \"Wf_Pendiente@1\" + \"Wf_UGS@1\"'
+
 # Sumatoria de los raster
 alg = "qgis:rastercalculator"
-Expresion = '\"CoberturayUsosReclass@1\" + \"CurvaturaReclass@1\" + \"GeomorfoReclass@1\" + \"PendientesReclass@1\" + \"UgsReclass@1\"'  # +\"CoberturaReclass@1\"'
-extents = CurvaturaReclass.extent()  # Capa de la cuál se copiará la extensión del algoritmo
+extents = Wf_CurvaturaPlano.extent()  # Capa de la cuál se copiará la extensión del algoritmo
 xmin = extents.xMinimum()  # xmin de la extensión
 xmax = extents.xMaximum()  # xmax de la extensión
 ymin = extents.yMinimum()  # ymin de la extensión
 ymax = extents.yMaximum()  # ymax de la extensión
 CRS = QgsCoordinateReferenceSystem('EPSG:3116')
-params = {'EXPRESSION': Expresion, 'LAYERS': [CurvaturaReclass], 'CELLSIZE': cellsize, 'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax), 'CRS': CRS, 'OUTPUT': Output}
+params = {'EXPRESSION': Expresion, 'LAYERS': [Wf_CurvaturaPlano], 'CELLSIZE': cellsize, 'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax), 'CRS': CRS, 'OUTPUT': Output}
 processing.run(alg, params)
 
 # Se agrega la capa raster LSI al lienzo
@@ -70,7 +85,7 @@ else:
     #Obteniendo así los atributos correspondintes a deslizamientos 
     alg = "gdal:cliprasterbymasklayer"
     Factor_Condicionante = rasterfile
-    Deslizamiento_Condicion = data_path+'/Pre_Proceso/DeslizamientosLSI.tif'
+    Deslizamiento_Condicion = data_path + '/Pre_Proceso/DeslizamientosLSI.tif'
     params = {'INPUT': Factor_Condicionante, 'MASK': Deslizamientos, 'SOURCE_CRS': QgsCoordinateReferenceSystem('EPSG:3116'),
     'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3116'), 'NODATA': None, 'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True,
     'KEEP_RESOLUTION': False, 'SET_RESOLUTION': False, 'X_RESOLUTION': None, 'Y_RESOLUTION': None, 'MULTITHREADING': False,
@@ -79,11 +94,11 @@ else:
     
     #Se obtienen las estadísticas zonales de la capa en cuestión (número de pixeles por atributo por deslizamiento)
     alg = "native:rasterlayerzonalstats"
-    Estadisticas_Deslizamiento = data_path+'/Pre_Proceso/DeslizamientosLSIEstadistica.csv'
+    Estadisticas_Deslizamiento = data_path + '/Pre_Proceso/DeslizamientosLSIEstadistica.csv'
     params = {'INPUT': Deslizamiento_Condicion, 'BAND': 1, 'ZONES': Deslizamiento_Condicion, 'ZONES_BAND': 1, 'REF_LAYER': 0, 'OUTPUT_TABLE': Estadisticas_Deslizamiento}
     processing.run(alg, params)
     
-    Estadisticas_Deslizamiento = data_path+'/Pre_Proceso/DeslizamientosLSIEstadistica.csv'
+    Estadisticas_Deslizamiento = data_path + '/Pre_Proceso/DeslizamientosLSIEstadistica.csv'
     DF_DeslizamientosEstadistica = pd.read_csv(Estadisticas_Deslizamiento, delimiter=",",encoding='latin-1')
 
 # Se obtienen las estadísticas zonales de los resultados LSI.
@@ -95,14 +110,14 @@ processing.run(alg, params)
 # Se cargan los archivos necesario para el proceso
 # Valores unicos del factor condicionante
 FILE_NAME = data_path + '/Pre_Proceso/LSIEstadistica.csv'
-DF_LSIEstadistica = pd.read_csv(FILE_NAME, delimiter=", ", encoding = 'latin-1')
-uniquevalues = DF_LSIEstadistica["zone"].unique()
-atributos = list(sorted(uniquevalues, reverse=True))
+DF_LSIEstadistica = pd.read_csv(FILE_NAME, encoding = 'latin-1')
+atributos = DF_LSIEstadistica["zone"].unique()
+df = pd.DataFrame(atributos)
+df = df.sort_values(by = 0)
 
 # Valores minimos y máximos LSI
 LSI_Min = int((round(min(atributos), 0)) - 1)
 LSI_Max = int(round(max(atributos), 0) + 1)
-Intervalo = list(sorted(range(LSI_Min, LSI_Max+1), reverse = True))
 
 # Se pasan los valores del raster LSI a un arreglo matricial
 rasterArray = gdal_array.LoadFile(rasterfile)
@@ -116,8 +131,8 @@ for sublist in rasterList:
 
 # La lista se convierte en un dataframe para eliminar los valores que no corresponden a LSI
 df = pd.DataFrame(flat_list)
-df = df.drop(df[df[0] < LSI_Min].index)
-df = df.drop(df[df[0] > LSI_Max].index)
+df = df.drop(df[df[0] < -100].index) #LSI_Min
+df = df.drop(df[df[0] > 100].index) #LSI_Max
 
 # Se crea el dataframe para realizar el proceso de la curva LSI
 DF_Susceptibilidad = pd.DataFrame(columns=['LSI_Min', 'LSI_Max', 'PIXLsi', 'PIXDesliz', 'PIXLsiAcum', 'PIXDeslizAcum', 'X', 'Y', 'Area', 'Categoria', 'Susceptibilidad'], dtype = float)
@@ -133,26 +148,34 @@ DF_Susceptibilidad.loc[0, 'X'] = 0
 DF_Susceptibilidad.loc[0, 'Y'] = 0
 
 # Se definen los percentiles en los que se harán los intervalos
-percentiles = list(sorted(range(101), reverse=True))
+n_percentil = sorted(range(101), reverse=True)
+
+#Se calcula el perfecntil cada 1 %
+percentiles = [np.percentile(df[0], 100) + 0.001]
+for i in range(1, len(n_percentil)-1):
+    Valor = np.percentile(df[0], n_percentil[i])
+    percentiles.append(Valor)
+percentiles.append(np.percentile(df[0], 0) - 0.001)
+
 
 # Se cuenta los números de pixeles para cada rango
 for i in range(1, len(percentiles)):
-    Min = np.percentile(df[0], percentiles[i])
-    Max = np.percentile(df[0], percentiles[i-1])
+    Min = percentiles[i]
+    Max = percentiles[i-1]
     # Se le asigna su id a cada atributo
     DF_Susceptibilidad.loc[i, 'LSI_Min'] = Min
     DF_Susceptibilidad.loc[i, 'LSI_Max'] = Max
     # Número de pixeles según la clase LSI
-    DF_Susceptibilidad.loc[i, 'PIXLsi'] = DF_LSIEstadistica.loc[(DF_LSIEstadistica['zone'] >= De) & (DF_LSIEstadistica['zone'] <= Hasta)]['count'].sum()
+    DF_Susceptibilidad.loc[i, 'PIXLsi'] = DF_LSIEstadistica.loc[(DF_LSIEstadistica['zone'] >= Min) & (DF_LSIEstadistica['zone'] < Max)]['count'].sum()
     # Se determina el número de pixeles con movimientos en masa en la clase
     if Deslizamientos.wkbType()== QgsWkbTypes.Point:
-        ValoresRaster.selectByExpression(f'"Id_Condici" < \'{Max}\' and "Id_Condici" > \'{Min}\'', QgsVectorLayer.SetSelection)
+        ValoresRaster.selectByExpression(f'"Id_Condici" < \'{Max}\' and "Id_Condici" >= \'{Min}\'', QgsVectorLayer.SetSelection)
         selected_fid = []
         selection = ValoresRaster.selectedFeatures()
         DF_Susceptibilidad.loc[i, 'PIXDesliz'] = len(selection)
     else:
-        DF_Susceptibilidad.loc[i,'PIXDesliz'] = DF_DeslizamientosEstadistica.loc[(DF_DeslizamientosEstadistica['zone'] > Min) 
-                                    & (DF_DeslizamientosEstadistica['zone'] <= Max)]['count'].sum()
+        DF_Susceptibilidad.loc[i,'PIXDesliz'] = DF_DeslizamientosEstadistica.loc[(DF_DeslizamientosEstadistica['zone'] >= Min) 
+                                    & (DF_DeslizamientosEstadistica['zone'] < Max)]['count'].sum()
     
 # Número total de pixeles
 Sum_LSI = DF_Susceptibilidad['PIXLsi'].sum()
@@ -221,9 +244,9 @@ RasterReclass = rasterfile
 Tabla = data_path + '/Pre_Proceso/DF_LSI.csv'
 Salida = data_path + '/Resultados/Susceptibilidad_Deslizamientos.tif'
 params = {
-    'INPUT_RASTER': RasterReclass, 'RASTER_BAND': 1, 'INPUT_TABLE': Tabla, 'MIN_FIELD': 'LSI_De',
-    'MAX_FIELD': 'LSI_Hasta', 'VALUE_FIELD': 'Categoria', 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 2,
-    'NODATA_FOR_MISSING': False, 'DATA_TYPE': 5, 'OUTPUT': Salida}
+    'INPUT_RASTER': RasterReclass, 'RASTER_BAND': 1, 'INPUT_TABLE': Tabla, 'MIN_FIELD': 'LSI_Min',
+    'MAX_FIELD': 'LSI_Max', 'VALUE_FIELD': 'Categoria', 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 1,
+    'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5, 'OUTPUT': Salida}
 processing.run(alg, params)
 
 # Se agrega la capa reclasificada con los rangos de susceptibilidad
