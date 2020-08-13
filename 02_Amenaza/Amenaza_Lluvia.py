@@ -38,7 +38,7 @@ d_ant = d_ant[0]
 
 #Desea ajustar las fechas de movimientos en masa (Si o No)
 Opciones = ["Si", "No"]
-Ajuste, ok = QInputDialog.getItem(None, "Seleccione si desea hacer un ajuste en las fechas del inventario", "Opciones", Opciones, 0, False)
+Ajuste, ok = QInputDialog.getItem(None, "Ajuste en las fechas del inventario", "Seleccione si desea hacer un ajuste en las fechas del inventario", Opciones, 0, False)
 
 if Ajuste == "Si":
     # Defina el número de días en el que se puede ajustar las fechas de los movimientos
@@ -51,8 +51,11 @@ if Ajuste == "Si":
 
 #Defina con que norma desea hacer la regresión (L1 o L2)
 Normas = ["L1", "L2"]
-Norma, ok = QInputDialog.getItem(None, "Seleccione la norma con la que se hará la regresión", "Opciones", Normas, 0, False)
+Norma, ok = QInputDialog.getItem(None, "Norma de la regresión", "Seleccione la norma con la que se hará la regresión", Normas, 0, False)
 
+#Se define cómo se quiere hacer la discritización
+Discri = ["Amenaza", "Amenaza - Tipo de movimiento"]
+Discritizacion, ok = QInputDialog.getItem(None, "Discretización", "Seleccione la cómo desea hacer la discretización de los MM", Discri, 0, False)
 
 # Ingresar registro de precipitación diaria para la estación en análisis
 DF_Precipitacion_diaria = pd.read_csv(data_path + '/01_Precipitacion_diaria.csv')
@@ -61,20 +64,19 @@ begin = min(DF_Precipitacion_diaria['date'])
 end = max(DF_Precipitacion_diaria['date'])
 
 # Se lee el inventario de movimientos en masa con fecha y susceptibilidad detonados por lluvias
-DF_Inv = pd.read_csv(data_path + '/Pre_Proceso/DF_Mov_Masa_Lluvias.csv')
-DF_Inv = DF_Inv.dropna(axis=0, subset=['FECHA_MOV']) 
+DF_Inv = pd.read_csv(data_path + '/Amenaza/DF_Mov_Masa_Lluvias.csv')
+DF_Inv = DF_Inv.dropna(axis=0, subset=['FECHA_MOV'])
 DF_Inv = DF_Inv.drop(['level_0'], axis=1) #Borrar
-DF_Inv.rename(columns={'Poligono_1':'Poligono'}, inplace=True) #Borrar
 
 DF_Inv['FECHA_MOV'] = pd.to_datetime(DF_Inv.FECHA_MOV)
 DF_Inv = DF_Inv.sort_values(by ='FECHA_MOV')
 DF_Inv.reset_index(level=0, inplace=True)
-DF_Inv.drop(['index'], axis=1)
+DF_Inv = DF_Inv.drop(['index'], axis=1)
 
 DF_Inv.set_index('FECHA_MOV',inplace=True)
 DF_Inv = DF_Inv.truncate(before = begin, after = end)
 DF_Inv.reset_index(level=0, inplace=True)
-DF_Inv.drop(['index'], axis=1)
+DF_Inv = DF_Inv.drop(['level_0'], axis=1)
 
 # Se lee los poligonos correspondientes a las estaciones
 DF_Poligonos = pd.read_csv(data_path + '/Pre_Proceso/DF_Raster_Poligonos_Voronoi.csv')
@@ -114,32 +116,41 @@ for poligono in Poligonos:
     Tipo_Evento = DF_Inv_Poligono['TIPO_MOV1'].unique()
     Tipo_Evento = pd.DataFrame(Tipo_Evento,columns=['Tipo_Mov'],dtype=object)
     
+    if Discritizacion == "Amenaza": Tipo_Evento = [1]
+    
     #Se hace el estudio según el tipo de evento
     for id_evento in range (0,len(Tipo_Evento)): # len(Categorias_Amenaza)
-        Tipo = Tipo_Evento.loc[id_evento,'Tipo_Mov']
         
-        if len(DF_Inv_Poligono[DF_Inv_Poligono['TIPO_MOV1'] == Tipo]) < 2:
-            print(f'No hay suficientes datos para completar el análisis del tipo {Tipo}')
-            continue
+        if Discritizacion == "Amenaza - Tipo de movimiento":
+            
+            Tipo = Tipo_Evento.loc[id_evento,'Tipo_Mov']
         
-        print('\n')
-        print(f'Se hará el análisis para el tipo {Tipo}')
-        print('\n')
-
-        DF_Inv_Poligono.set_index('TIPO_MOV1',inplace=True)
-        DF_Inv_Tipo = DF_Inv_Poligono.loc[Tipo]
-        DF_Inv_Tipo.reset_index(level=0, inplace=True)
-        DF_Inv_Poligono.reset_index(level=0, inplace=True)
+            if len(DF_Inv_Poligono[DF_Inv_Poligono['TIPO_MOV1'] == Tipo]) < 2:
+                print(f'No hay suficientes datos para completar el análisis del tipo {Tipo}')
+                continue
+            
+            print('\n')
+            print(f'Se hará el análisis para el tipo {Tipo}')
+            print('\n')
+    
+            DF_Inv_Poligono.set_index('TIPO_MOV1',inplace=True)
+            DF_Inv_Tipo = DF_Inv_Poligono.loc[Tipo]
+            DF_Inv_Tipo.reset_index(level=0, inplace=True)
+            DF_Inv_Poligono.reset_index(level=0, inplace=True)
         
-        if Tipo == "Deslizamiento":
-            Campo_Amenaza = "Susc_Desli"
-        elif Tipo == "Caida":
-            Campo_Amenaza = "Susc_Caida"
-        elif Tipo == "Flujo":
-            Campo_Amenaza = "Susc_Flujo"
+            if Tipo == "Deslizamiento":
+                Campo_Amenaza = "Susc_Desli"
+            elif Tipo == "Caida":
+                Campo_Amenaza = "Susc_Caida"
+            elif Tipo == "Flujo":
+                Campo_Amenaza = "Susc_Flujo"
+            else:
+                print(f"No se tiene un análisis para el tipo de movimiento en masa {Tipo}")
+                continue
         else:
-            print(f"No se tiene un análisis para el tipo de movimiento en masa {Tipo}")
-            continue
+            DF_Inv_Tipo = DF_Inv_Poligono.copy(deep=True)
+            Campo_Amenaza = "Susc_Desli"
+            Tipo = "Todos"
         
         if (Campo_Amenaza in DF_Inv_Tipo.columns) is False:
             continue
@@ -254,10 +265,10 @@ for poligono in Poligonos:
             
             # Se extraen los datos de las coordenadas x,y en un data frame individual
             x = DF_DatosLluviaEventos['Pant']
-            x = list(x)
+            x = x.tolist()
 
             y = DF_DatosLluviaEventos['P24']
-            y = list(y)
+            y= y.tolist()
             
             #Se resuleve el modelo líneal por medio de vectores y matrices
             numdat = len(y)
@@ -375,6 +386,174 @@ DF_Final = DF_Final.drop(['index'], axis=1)
 print('\n')
 print(DF_Final)
 DF_Final.reset_index().to_csv(data_path + '/Resultados/DF_Excedencia.csv',header=True,index=False)
+
+Amenaza_Lluvia = QgsVectorLayer(data_path + '/Amenaza/Amenaza_Lluvia.shp')
+
+if Discritizacion == "Amenaza - Tipo de movimiento":
+    # Se inicia a editar la capa
+    caps = Amenaza_Lluvia.dataProvider().capabilities()
+    # Se añade un campo nuevo llamado "Raster"
+    # se asignará el valor único de cada caracteristica
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("D_Baja", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("D_Media", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("D_Alta", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("C_Baja", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("C_Media", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("C_Alta", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("F_Baja", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("F_Media", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("F_Alta", QVariant.Double)])
+    # Se guarda la edición
+    Amenaza_Lluvia.updateFields()
+       
+    # Se determina el índice de la columna que fue agregada
+    D_Baja = Amenaza_Lluvia.fields().indexFromName("D_Baja")
+    D_Media = Amenaza_Lluvia.fields().indexFromName("D_Media")
+    D_Alta = Amenaza_Lluvia.fields().indexFromName("D_Alta")
+    C_Baja = Amenaza_Lluvia.fields().indexFromName("C_Baja")
+    C_Media = Amenaza_Lluvia.fields().indexFromName("C_Media")
+    C_Alta = Amenaza_Lluvia.fields().indexFromName("C_Alta")
+    F_Baja = Amenaza_Lluvia.fields().indexFromName("F_Baja")
+    F_Media = Amenaza_Lluvia.fields().indexFromName("F_Media")
+    F_Alta = Amenaza_Lluvia.fields().indexFromName("F_Alta")
+
+    # Se obtienen los valores únicos de las caracteristicas
+    atributos = DF_Final['Poli_Thiessen'].unique()
+       
+    # Se inicia a editar
+    caps = Amenaza_Lluvia.dataProvider().capabilities()
+        
+    for i in range(0, len(atributos)):
+        Atri = int(atributos[i])
+
+        Indice_D_0 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Baja') & (DF_Final.Tipo_Mov == 'Deslizamiento')].index
+        if len(Indice_D_0) != 0: 
+            Ptem_D_0 = float(DF_Final.loc[Indice_D_0[0], 'Ptem'])
+        else:
+            Ptem_D_0 = np.nan
+            
+        Indice_D_1 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Media') & (DF_Final.Tipo_Mov == 'Deslizamiento')].index
+        if len(Indice_D_1) != 0: 
+            Ptem_D_1 = float(DF_Final.loc[Indice_D_1[0], 'Ptem'])
+        else:
+            Ptem_D_1 = np.nan
+            
+        Indice_D_2 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Alta') & (DF_Final.Tipo_Mov == 'Deslizamiento')].index
+        if len(Indice_D_2) != 0: 
+            Ptem_D_2 = float(DF_Final.loc[Indice_D_2[0], 'Ptem'])
+        else:
+            Ptem_D_2 = np.nan
+        
+        Indice_C_0 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Baja') & (DF_Final.Tipo_Mov == 'Caida')].index
+        if len(Indice_C_0) != 0: 
+            Ptem_C_0 = float(DF_Final.loc[Indice_C_0[0], 'Ptem'])
+        else:
+            Ptem_C_0 = np.nan
+        
+        Indice_C_1 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Media') & (DF_Final.Tipo_Mov == 'Caida')].index
+        if len(Indice_C_1) != 0: 
+            Ptem_C_1 = float(DF_Final.loc[Indice_C_1[0], 'Ptem'])
+        else:
+            Ptem_C_1 = np.nan
+            
+        Indice_C_2 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Alta') & (DF_Final.Tipo_Mov == 'Caida')].index
+        if len(Indice_C_2) != 0: 
+            Ptem_C_2 = float(DF_Final.loc[Indice_C_2[0], 'Ptem'])
+        else:
+            Ptem_C_2 = np.nan
+          
+        Indice_F_0 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Baja') & (DF_Final.Tipo_Mov == 'Flujo')].index
+        if len(Indice_F_0) != 0: 
+            Ptem_F_0 = float(DF_Final.loc[Indice_F_0[0], 'Ptem'])
+        else:
+            Ptem_F_0 = np.nan
+            
+        Indice_F_1 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Media') & (DF_Final.Tipo_Mov == 'Flujo')].index
+        if len(Indice_F_1) != 0: 
+            Ptem_F_1 = float(DF_Final.loc[Indice_F_1[0], 'Ptem'])
+        else:
+            Ptem_F_1 = np.nan
+            
+        Indice_F_2 = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Alta') & (DF_Final.Tipo_Mov == 'Flujo')].index
+        if len(Indice_F_2) != 0: 
+            Ptem_F_2 = float(DF_Final.loc[Indice_F_2[0], 'Ptem'])
+        else:
+            Ptem_F_2 = np.nan
+
+        # Se hace la selección en la capa de la caracteristica en cuestión
+        Amenaza_Lluvia.selectByExpression(
+            f'"Raster"=\'{Atri}\'', QgsVectorLayer.SetSelection)
+            
+        # Se reemplazan los id del atributo seleccionada
+        selected_fid = []
+        selection = Amenaza_Lluvia.selectedFeatures()
+            
+        for feature in selection:  # Se recorren las filas seleccionadas
+            fid = feature.id()  # Se obtiene el id de la fila seleccionada
+            if caps & QgsVectorDataProvider.ChangeAttributeValues:
+                # La columna nueva se llenará con el id de la caracteristica (i+1)
+                attrs = { D_Baja : Ptem_D_0, D_Media : Ptem_D_1, D_Alta : Ptem_D_2, C_Baja : Ptem_C_0, C_Media : Ptem_C_1, C_Alta : Ptem_C_2, F_Baja : Ptem_F_0, F_Media : Ptem_F_1, F_Alta : Ptem_F_2 }
+                # Se hace el cambio de los atributos
+                Amenaza_Lluvia.dataProvider().changeAttributeValues({fid: attrs})
+
+else:
+    # Se inicia a editar la capa
+    caps = Amenaza_Lluvia.dataProvider().capabilities()
+    # Se añade un campo nuevo para llenar las probabilidades
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("Baja", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("Media", QVariant.Double)])
+    Amenaza_Lluvia.dataProvider().addAttributes([QgsField("Alta", QVariant.Double)])
+
+    # Se guarda la edición
+    Amenaza_Sismo.updateFields()
+       
+    # Se determina el índice de la columna que fue agregada
+    Baja = Amenaza_Lluvia.fields().indexFromName("Baja")
+    Media = Amenaza_Lluvia.fields().indexFromName("Media")
+    Alta = Amenaza_Lluvia.fields().indexFromName("Alta")
+
+    # Se obtienen los valores únicos de las caracteristicas
+    atributos = DF_Final['Poli_Thiessen'].unique()
+       
+    # Se inicia a editar
+    caps = Amenaza_Lluvia.dataProvider().capabilities()
+        
+    for i in range(0, len(atributos)):
+        Atri = int(atributos[i])
+
+        Indice_Baja = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Baja')].index
+        if len(Indice_Baja) != 0: 
+            Ptem_Baja = float(DF_Final.loc[Indice_Baja[0], 'Ptem'])
+        else:
+            Ptem_Baja = np.nan
+            
+        Indice_Media = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Media')].index
+        if len(Indice_Media) != 0: 
+            Ptem_Media = float(DF_Final.loc[Indice_Media[0], 'Ptem'])
+        else:
+            Ptem_Media = np.nan
+            
+        Indice_Alta = DF_Final[(DF_Final.Poli_Thiessen == Atri) & (DF_Final.Amenaza == 'Alta')].index
+        if len(Indice_Alta) != 0: 
+            Ptem_Alta = float(DF_Final.loc[Indice_Alta[0], 'Ptem'])
+        else:
+            Ptem_Alta = np.nan
+
+        # Se hace la selección en la capa de la caracteristica en cuestión
+        Amenaza_Lluvia.selectByExpression(
+            f'"Raster"=\'{Atri}\'', QgsVectorLayer.SetSelection)
+            
+        # Se reemplazan los id del atributo seleccionada
+        selected_fid = []
+        selection = Amenaza_Lluvia.selectedFeatures()
+            
+        for feature in selection:  # Se recorren las filas seleccionadas
+            fid = feature.id()  # Se obtiene el id de la fila seleccionada
+            if caps & QgsVectorDataProvider.ChangeAttributeValues:
+                # La columna nueva se llenará con el id de la caracteristica (i+1)
+                attrs = { Baja : Ptem_Baja, Media : Ptem_Media, Alta : Ptem_Alta }
+                # Se hace el cambio de los atributos
+                Amenaza_Lluvia.dataProvider().changeAttributeValues({fid: attrs})
 
 elapsed_time = time() - start_time
 print("Elapsed time: %0.10f seconds." % elapsed_time)

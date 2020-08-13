@@ -3,6 +3,7 @@ from qgis.PyQt.QtCore import QVariant
 from qgis.core import QgsProject
 import matplotlib.pyplot as plt
 from osgeo import gdal_array
+from time import time
 import pandas as pd
 import numpy as np
 import processing
@@ -14,42 +15,57 @@ data_path = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
 data_path = data_path[0]
 data_path = data_path.replace("\\", "/")
 
+# Se imprime una recomendación
+QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
+                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
+
 # Se pide las dimensiones del pixel
-Pixel = QInputDialog.getDouble(None, 'CELLSIZE', 'Introduce el tamaño del pixel: ')
+Pixel = QInputDialog.getDouble(None, 'Dimesión del pixel', 'Introduzca el tamaño del pixel: ')
 cellsize = Pixel[0]
 
+# Se determina el momento en que inicia la ejcución del programa
+start_time = time()
+
 # Capas raster reclasificadas con su respectivo Wf
+
+# Pendiente
 Ruta_Pendiente = data_path + '/Resultados/Wf_Pendiente.tif'
 Wf_Pendiente = QgsRasterLayer(Ruta_Pendiente, "Wf_Pendiente")
 QgsProject.instance().addMapLayer(Wf_Pendiente)
 
+# Subunidades geomorfologicas
 Ruta_SubunidadesGeomorf = data_path + '/Resultados/Wf_SubunidadesGeomorf.tif'
 Wf_SubunidadesGeomorf = QgsRasterLayer(Ruta_SubunidadesGeomorf, "Wf_SubunidadesGeomorf")
 QgsProject.instance().addMapLayer(Wf_SubunidadesGeomorf)
 
+# Unidades geologicas superficiales
 Ruta_UGS = data_path + '/Resultados/Wf_UGS.tif'
 Wf_UGS = QgsRasterLayer(Ruta_UGS, "Wf_UGS")
 QgsProject.instance().addMapLayer(Wf_UGS)
 
+# Cobertura y uso
 Ruta_CoberturaUso = data_path + '/Resultados/Wf_CoberturaUso.tif'
 Wf_CoberturaUso = QgsRasterLayer(Ruta_CoberturaUso, "Wf_CoberturaUso")
 QgsProject.instance().addMapLayer(Wf_CoberturaUso)
 
+# Curvatura plana
 Ruta_CurvaturaPlano = data_path + '/Resultados/Wf_CurvaturaPlano.tif'
 Wf_CurvaturaPlano = QgsRasterLayer(Ruta_CurvaturaPlano, "Wf_CurvaturaPlano")
 QgsProject.instance().addMapLayer(Wf_CurvaturaPlano)
 
+# Cambio de cobertura
 Ruta_CambioCobertura = data_path + '/Resultados/Wf_CambioCobertura.tif'
-
-# Dirección del resultado de la suma de los Wf
-Output = data_path + '/Resultados/LSI.tif'
-
 if os.path.isfile(Ruta_CambioCobertura) is True:
+    # Si el archivo existe se tiene en cuenta en la suma
     Wf_CambioCobertura = QgsRasterLayer(Ruta_CambioCobertura, "Wf_CambioCobertura")
     QgsProject.instance().addMapLayer(Wf_CambioCobertura)
     Expresion = '\"Wf_CoberturaUso@1\" + \"Wf_CurvaturaPlano@1\" + \"Wf_SubunidadesGeomorf@1\" + \"Wf_Pendiente@1\" + \"Wf_UGS@1\" + \"Wf_CambioCobertura@1\"'
 else: 
+    # Si cambio de cobertura no existe no se tiene en cuenta para la suma de pesos
     Expresion = '\"Wf_CoberturaUso@1\" + \"Wf_CurvaturaPlano@1\" + \"Wf_SubunidadesGeomorf@1\" + \"Wf_Pendiente@1\" + \"Wf_UGS@1\"'
+
+# Dirección del resultado de la suma de los Wf
+Output = data_path + '/Resultados/LSI.tif'
 
 # Sumatoria de los raster
 alg = "qgis:rastercalculator"
@@ -59,19 +75,22 @@ xmax = extents.xMaximum()  # xmax de la extensión
 ymin = extents.yMinimum()  # ymin de la extensión
 ymax = extents.yMaximum()  # ymax de la extensión
 CRS = QgsCoordinateReferenceSystem('EPSG:3116')
-params = {'EXPRESSION': Expresion, 'LAYERS': [Wf_CurvaturaPlano], 'CELLSIZE': cellsize, 'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax), 'CRS': CRS, 'OUTPUT': Output}
+params = {'EXPRESSION': Expresion, 'LAYERS': [Wf_CurvaturaPlano], 'CELLSIZE': cellsize,
+          'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax), 'CRS': CRS, 'OUTPUT': Output}
 processing.run(alg, params)
 
 # Se agrega la capa raster LSI al lienzo
 LSI = QgsRasterLayer(data_path + '/Resultados/LSI.tif', "LSI")
 QgsProject.instance().addMapLayer(LSI)
 
+# Se define el archivo raster para el procedimiento
 rasterfile = data_path + '/Resultados/LSI.tif'
 
 # Se lee el archivo correspondientes a deslizamientos
 Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos.shp')
 
-if Deslizamientos.wkbType()== QgsWkbTypes.Point:
+# Dependiendo de la geometría de los deslizamientos se hace el procedimiento
+if Deslizamientos.wkbType() == QgsWkbTypes.Point:
     # Obtenermos el id de la caracteristica del punto de deslizamiento
     alg = "qgis:rastersampling"
     output = data_path+'/Pre_Proceso/ValoresLSI.shp'
@@ -81,8 +100,8 @@ if Deslizamientos.wkbType()== QgsWkbTypes.Point:
     # Valores LSI en los puntos de deslizamiento
     ValoresRaster = QgsVectorLayer(data_path + '/Pre_Proceso/ValoresLSI.shp', 'ValoresLSI')
 else:
-    #Se hace la interesección de el factor condicionante con el área de deslizamientos
-    #Obteniendo así los atributos correspondintes a deslizamientos 
+    # Se hace la interesección de el factor condicionante con el área de deslizamientos
+    # Obteniendo así los atributos correspondintes a deslizamientos 
     alg = "gdal:cliprasterbymasklayer"
     Factor_Condicionante = rasterfile
     Deslizamiento_Condicion = data_path + '/Pre_Proceso/DeslizamientosLSI.tif'
@@ -92,14 +111,16 @@ else:
     'OPTIONS': '', 'DATA_TYPE': 0, 'EXTRA': '', 'OUTPUT': Deslizamiento_Condicion}
     processing.run(alg, params)
     
-    #Se obtienen las estadísticas zonales de la capa en cuestión (número de pixeles por atributo por deslizamiento)
+    # Se obtienen las estadísticas zonales de la capa en cuestión (número de pixeles por atributo por deslizamiento)
     alg = "native:rasterlayerzonalstats"
     Estadisticas_Deslizamiento = data_path + '/Pre_Proceso/DeslizamientosLSIEstadistica.csv'
-    params = {'INPUT': Deslizamiento_Condicion, 'BAND': 1, 'ZONES': Deslizamiento_Condicion, 'ZONES_BAND': 1, 'REF_LAYER': 0, 'OUTPUT_TABLE': Estadisticas_Deslizamiento}
+    params = {'INPUT': Deslizamiento_Condicion, 'BAND': 1, 'ZONES': Deslizamiento_Condicion, 'ZONES_BAND': 1,
+              'REF_LAYER': 0, 'OUTPUT_TABLE': Estadisticas_Deslizamiento}
     processing.run(alg, params)
     
+    # Lectura de las estadísticas de la zona de deslizamientos como dataframe
     Estadisticas_Deslizamiento = data_path + '/Pre_Proceso/DeslizamientosLSIEstadistica.csv'
-    DF_DeslizamientosEstadistica = pd.read_csv(Estadisticas_Deslizamiento, delimiter=",",encoding='latin-1')
+    DF_DeslizamientosEstadistica = pd.read_csv(Estadisticas_Deslizamiento, delimiter=",", encoding = 'latin-1')
 
 # Se obtienen las estadísticas zonales de los resultados LSI.
 alg = "native:rasterlayerzonalstats"
@@ -135,7 +156,8 @@ df = df.drop(df[df[0] < -100].index) #LSI_Min
 df = df.drop(df[df[0] > 100].index) #LSI_Max
 
 # Se crea el dataframe para realizar el proceso de la curva LSI
-DF_Susceptibilidad = pd.DataFrame(columns=['LSI_Min', 'LSI_Max', 'PIXLsi', 'PIXDesliz', 'PIXLsiAcum', 'PIXDeslizAcum', 'X', 'Y', 'Area', 'Categoria', 'Susceptibilidad'], dtype = float)
+DF_Susceptibilidad = pd.DataFrame(columns=['LSI_Min', 'LSI_Max', 'PIXLsi', 'PIXDesliz', 'PIXLsiAcum',
+                                           'PIXDeslizAcum', 'X', 'Y', 'Area', 'Categoria', 'Susceptibilidad'], dtype = float)
 
 # Se llena la fila de índice 0 del dataframe
 DF_Susceptibilidad.loc[0, 'LSI_Min'] = 0
@@ -157,7 +179,6 @@ for i in range(1, len(n_percentil)-1):
     percentiles.append(Valor)
 percentiles.append(np.percentile(df[0], 0) - 0.001)
 
-
 # Se cuenta los números de pixeles para cada rango
 for i in range(1, len(percentiles)):
     Min = percentiles[i]
@@ -167,13 +188,15 @@ for i in range(1, len(percentiles)):
     DF_Susceptibilidad.loc[i, 'LSI_Max'] = Max
     # Número de pixeles según la clase LSI
     DF_Susceptibilidad.loc[i, 'PIXLsi'] = DF_LSIEstadistica.loc[(DF_LSIEstadistica['zone'] >= Min) & (DF_LSIEstadistica['zone'] < Max)]['count'].sum()
-    # Se determina el número de pixeles con movimientos en masa en la clase
+    # Se determina el número de pixeles de deslizamientos en la clase
+    # Si los deslizamientos tienen geometría de puntos
     if Deslizamientos.wkbType()== QgsWkbTypes.Point:
         ValoresRaster.selectByExpression(f'"Id_Condici" < \'{Max}\' and "Id_Condici" >= \'{Min}\'', QgsVectorLayer.SetSelection)
         selected_fid = []
         selection = ValoresRaster.selectedFeatures()
         DF_Susceptibilidad.loc[i, 'PIXDesliz'] = len(selection)
     else:
+        # Si los deslizamientos tienen geometría de poligonos
         DF_Susceptibilidad.loc[i,'PIXDesliz'] = DF_DeslizamientosEstadistica.loc[(DF_DeslizamientosEstadistica['zone'] >= Min) 
                                     & (DF_DeslizamientosEstadistica['zone'] < Max)]['count'].sum()
     
@@ -191,7 +214,7 @@ for i in range(1, len(DF_Susceptibilidad)):
 
 # Se calcula el área entre los rangos por medio de la formula del trapecio
 for i in range(0, len(DF_Susceptibilidad)-1):
-    DF_Susceptibilidad.loc[i, 'Area'] = (DF_Susceptibilidad.loc[i+1, 'X']-DF_Susceptibilidad.loc[i, 'X'])*(DF_Susceptibilidad.loc[i+1, 'Y']+DF_Susceptibilidad.loc[i, 'Y'])/2
+    DF_Susceptibilidad.loc[i, 'Area'] = (DF_Susceptibilidad.loc[i+1, 'X'] - DF_Susceptibilidad.loc[i, 'X'])*(DF_Susceptibilidad.loc[i+1, 'Y'] + DF_Susceptibilidad.loc[i, 'Y'])/2
 
 # Se suman las áreas para obtener así el área bajo la curva correspondiendte a la bondad y ajuste de la curva
 Area_Total = DF_Susceptibilidad['Area'].sum()
@@ -204,10 +227,13 @@ else:
     iface.messageBar().pushMessage("Ajuste LSI", 'La función final de susceptibilidad NO es aceptable', Qgis.Warning, 5)
 
 # Se identifican los valores Y para asignar el rango de susceptibilidad
+# Alta
 DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] <= 0.75)].index, 'Categoria'] = 2
 DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] <= 0.75)].index, 'Susceptibilidad'] = 'Alta'
+# Media
 DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > 0.75) & (DF_Susceptibilidad['Y'] <= 0.98)].index, 'Categoria'] = 1
 DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > 0.75) & (DF_Susceptibilidad['Y'] <= 0.98)].index, 'Susceptibilidad'] = 'Media'
+# Baja
 DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > 0.98)].index, 'Categoria'] = 0
 DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > 0.98)].index, 'Susceptibilidad'] = 'Baja'
 
@@ -251,3 +277,7 @@ processing.run(alg, params)
 
 # Se agrega la capa reclasificada con los rangos de susceptibilidad
 iface.addRasterLayer(data_path + '/Resultados/Susceptibilidad_Deslizamientos.tif', "Susceptibilidad_Deslizamientos")
+
+# Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
+elapsed_time = time() - start_time
+print("Elapsed time: %0.10f seconds." % elapsed_time)

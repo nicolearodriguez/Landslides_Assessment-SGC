@@ -4,6 +4,7 @@ from qgis.PyQt.QtCore import QVariant
 from qgis.gui import QgsMessageBar
 from qgis.core import QgsProject
 from os import listdir
+from time import time
 import pandas as pd
 import numpy as np
 import processing
@@ -13,21 +14,35 @@ import os
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
 data_path = data_path.replace("\\", "/")
 
+#Se determina el momento en que inicia la ejcución del programa
+start_time = time()
+
+# Se listan los archivos en la ruta general
 list = listdir(data_path)
 
+#Se imprime una recomendación
+QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
+                        'Se recomienda que el campo representativo para los factores condicionantes corresponda a acronimos de forma que no haya interferencia con caracteres que Qgis no distinga tales como ñ y tildes')
+QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
+                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
+QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
+                        'Es necesario que todos los tipos de deslizamiento estén unificados en tipo y su atributo corresponda a: Deslizamiento')
+
+# Se determinan los archivos con extensión .shp en la ruta
 shape = []
 for i in list:
     if i[-4:] == '.shp':
         shape.append(i)
 shape.append('None')
 
+# Se determinan los archivos con extensión .tif en la ruta
 raster = []
 for i in list:
     if i[-4:] == '.tif':
         raster.append(i)
 raster.append('None')
 
-# Se comprueba si las carpetas de pre-proceso y resultados existen
+# Se comprueba si las carpetas de pre-proceso, resultados y amenaza existen
 # de no ser así se crean
 if os.path.isdir(data_path + '/Pre_Proceso') is False:
     os.mkdir(data_path + '/Pre_Proceso')
@@ -38,45 +53,69 @@ if os.path.isdir(data_path + '/Resultados') is False:
 if os.path.isdir(data_path + '/Amenaza') is False:
     os.mkdir(data_path + '/Amenaza')
 
-# Se piden las entradas necesarias para la ejecución-DEM del área de estudio
-# y capas vectoriales de los factores condicionante
+# Se piden las entradas necesarias para la ejecución: 
+# Capas vectoriales de los factores condicionante y
+# DEM del área de estudio
+
 
 # Modelo digital de elevación
 DEM, ok = QInputDialog.getItem(None, "Seleccione el archivo DEM", "Opciones", raster, 0, False)
 Ruta_DEM = data_path + '/' + DEM
 
 # Movimientos en masa tipo puntos
-Mov_Masa_Puntos, ok = QInputDialog.getItem(None, "Movimientos en masa tipo PUNTOS", "Seleccione el archivo de movimientos en masa tipo puntos", shape, 0, False)
+Mov_Masa_Puntos, ok = QInputDialog.getItem(None, "Movimientos en masa tipo PUNTOS",
+                                           "Seleccione el archivo de movimientos en masa con geometría de puntos", shape, 0, False)
 Ruta_Mov_Masa_Puntos = data_path + '/' + Mov_Masa_Puntos
 
+#Se determina si existe el archivo de MM 
 if os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
     Mov_Masa_Puntos = QgsVectorLayer(data_path + '/' + Mov_Masa_Puntos)
     
+    # Se listan los atributos del arhivo vectorial
     atributos_Mov_Masa_Puntos = []
     for field in Mov_Masa_Puntos.fields():
         atributos_Mov_Masa_Puntos.append(field.name())
         
     # Campo dónde se encuentra el tipo de movimiento en masa para la capa de puntos
-    Campo_Puntos, ok = QInputDialog.getItem(None, "Tipo de movimiento en masa", "Campo del tipo de movimiento en masa tipo punto", atributos_Mov_Masa_Puntos, 0, False)
+    Campo_Puntos, ok = QInputDialog.getItem(None, "Tipo de movimiento en masa",
+                                            "Campo del tipo de movimiento en masa con geometría de punto", atributos_Mov_Masa_Puntos, 0, False)
+    
+    # Campo dónde se encuentra la fecha del movimiento en masa para la capa de puntos
+    Fecha_Puntos, ok = QInputDialog.getItem(None, "Fecha de movimiento en masa",
+                                            "Campo de la fecha de movimiento en masa con geometría de punto", atributos_Mov_Masa_Puntos, 0, False)
 
 # Movimientos en masa tipo poligonos
-Mov_Masa_Poligono, ok = QInputDialog.getItem(None, "Movimientos en masa tipo POLIGONO", "Seleccione el archivo de movimientos en masa tipo poligonos", shape, 0, False)
+Mov_Masa_Poligono, ok = QInputDialog.getItem(None, "Movimientos en masa tipo POLIGONO",
+                                             "Seleccione el archivo de movimientos con geometría de poligonos", shape, 0, False)
 Ruta_Mov_Masa_Poligono = data_path + '/' + Mov_Masa_Poligono
 
+#Se determina si existe el archivo de MM 
 if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
     Mov_Masa_Poligono = QgsVectorLayer(data_path + '/' + Mov_Masa_Poligono)
     
+    # Se listan los atributos del arhivo vectorial
     atributos_Mov_Masa_Poligono = []
     for field in Mov_Masa_Poligono.fields():
         atributos_Mov_Masa_Poligono.append(field.name())
         
     # Campo dónde se encuentra el tipo de movimiento en masa para la capa de poligonos
-    Campo_Poligono, ok = QInputDialog.getItem(None, "Tipo de movimiento en masa", "Campo del tipo de movimiento en masa tipo poligono", atributos_Mov_Masa_Poligono, 0, False)
+    Campo_Poligono, ok = QInputDialog.getItem(None, "Tipo de movimiento en masa",
+                                              "Campo del tipo de movimiento en masa con geometría de poligono", atributos_Mov_Masa_Poligono, 0, False)
+    
+    # Campo dónde se encuentra el tipo de movimiento en masa para la capa de poligonos
+    Fecha_Poligono, ok = QInputDialog.getItem(None, "Fecha de movimiento en masa",
+                                              "Campo de la fecha de movimiento en masa con geometría de poligono", atributos_Mov_Masa_Poligono, 0, False)
 
+#Se verifica si existen ambos archivos de MM
 if os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
     if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
+        # Se revisa que los campos del tipo de MM y de la fecha de ocurrencia coincidan para ambas capas vectoriales
         if Campo_Puntos != Campo_Poligono:
-            QMessageBox.critical(iface.mainWindow(), "Movimientos", 'Los campos del tipo de MM de las capas de movimientos debe ser iguales')
+            QMessageBox.critical(iface.mainWindow(), "Campo del tipo de MM",
+                                 'Los campos del tipo de MM de las capas de movimientos debe ser iguales')
+        if Fecha_Puntos != Fecha_Poligono:
+            QMessageBox.critical(iface.mainWindow(), "Campo de la fecha de MM",
+                                 'Los campos de la fecha de MM de las capas de movimientos debe ser iguales')
 
 # Dimensiones del pixel
 cellsize, ok = QInputDialog.getDouble(
@@ -118,21 +157,23 @@ cellsize, ok = QInputDialog.getDouble(
 
 # ##################################### Factores Condicionantes ##################################### #
 
+# Se define la función rasterize para la rasterización de los factores condicionantes con base en el campo representativo
 def rasterize(Factor_Condicionante):
-    # Unidades geologicas superficiales
-    Ruta_Factor, ok = QInputDialog.getItem(None, f"{Factor_Condicionante}", "Seleccione el archivo de {Factor_Condicionante}", shape, 0, False)
+    # Se ingresa el archivo vectorial del factor condicionante
+    Ruta_Factor, ok = QInputDialog.getItem(None, f"{Factor_Condicionante}", f"Seleccione el archivo de {Factor_Condicionante}", shape, 0, False)
     Ruta_Factor = data_path + '/' + Ruta_Factor
     Factor = QgsVectorLayer(Ruta_Factor)
-        
+    
     # Si el archivo de Factor existe se hace el procedimiento
     if os.path.isfile(Ruta_Factor) is True:
         
+        # Se listan los atributos del arhivo vectorial
         atributos_Factor = []
         for field in Factor.fields():
             atributos_Factor.append(field.name())
         
         # Nombre del campo dónde se encuentran los códigos representativos de las Factor
-        Codigo_Factor, ok = QInputDialog.getItem(None, f"Campo representativo de las {Factor_Condicionante}", "Seleccione el campo representativo de las {Factor_Condicionante}", atributos_Factor, 0, False)
+        Codigo_Factor, ok = QInputDialog.getItem(None, f"Campo representativo de las {Factor_Condicionante}", f"Seleccione el campo representativo de las {Factor_Condicionante}", atributos_Factor, 0, False)
         
         # Se hace la corrección geometrica del factor condicionantes.
         alg = "native:fixgeometries"
@@ -146,7 +187,7 @@ def rasterize(Factor_Condicionante):
         # Se inicia a editar la capa
         caps = Factor.dataProvider().capabilities()
         # Se añade un campo nuevo llamado "Raster"
-        # se asignará el valor único de cada aracteristica
+        # dónde se asignará el valor único de cada aracteristica
         Factor.dataProvider().addAttributes([QgsField("Raster", QVariant.Int)])
         # Se guarda la edición
         Factor.updateFields()
@@ -172,13 +213,13 @@ def rasterize(Factor_Condicionante):
         for i in range(0, len(atributos)):
             Atri = df.loc[i, 0]  # Caracteristica en cuestión
             DF_Raster.loc[i, 'Caract'] = Atri  # Se llena el dataframe con la caracteristica
-            DF_Raster.loc[i, 'ID'] = i+1  # Se llena el dataframe con el id
-            # Para el caso de las Factor se obtienen las dos primeras letras de su acronimo
+            DF_Raster.loc[i, 'ID'] = i+1  # Se llena el dataframe con el id correspondiente
+            # Se obtienen las dos primeras letras de su acronimo (Se utilizará en las UGS)
             DF_Raster.loc[i, 'General'] = Atri[0:2]
             # Se hace la selección en la capa de la caracteristica en cuestión
             Factor.selectByExpression(f'"{Codigo_Factor}"=\'{Atri}\'', QgsVectorLayer.SetSelection)
             
-            # Se reemplazan los id del atributo seleccionada
+            # Se define cuál es la selección
             selected_fid = []
             selection = Factor.selectedFeatures()
             
@@ -211,19 +252,24 @@ def rasterize(Factor_Condicionante):
         
         # Se añade la capa raster al lienzo
         iface.addRasterLayer(data_path + f'/Pre_Proceso/{Factor_Condicionante}.tif', f"{Factor_Condicionante}")
-    
+   
+    # Si la capa no existe se emite un mensaje
     else:
         iface.messageBar().pushMessage(
             "Factor condicionante", f'No hay archivo de {Factor_Condicionante}', Qgis.Info, 5)
 
+# Lista de los factores condicionantes continuos
 Factor_Condicionante = ['UGS', 'SubunidadesGeomorf', 'CoberturaUso', 'CambioCobertura']
 
+# Se recorre la lista de factores condicionates continuos
 for factor in Factor_Condicionante:
+    # Se implementa la función rasterize para cada factor
     rasterize(factor)
 
-# ####################### Movimientos en Masa (Deslizamientos) ####################### #    
+# ####################### Movimientos en Masa ####################### #    
  
 # Se genera el mapa de deslizamientos dependiendo de los archivos base que se tengan
+
 # Se determina si hay mapa de poligonos de movimientos en masa
 if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
     
@@ -266,8 +312,7 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
             processing.run(alg, params)
             
         else:
-            #Se generan puntos en los poligonos en los centroides de los pixeles
-            #Se basa en los pixeles del raster de Factor el cuál es un factor que siempre debe tenerse
+            #Se generan puntos en los centroides de los poligonos 
             alg = "native:centroids"
             Deslizamientos_poligonos = data_path+'/Pre_Proceso/Deslizamientos_poligonos.shp'
             params = {'INPUT': Desliz_Preproceso, 'ALL_PARTS': True, 'OUTPUT': Deslizamientos_poligonos}
@@ -280,6 +325,7 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
         QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Deslizamientos_puntos, "utf-8", 
             QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
         
+        # Se lee como archivo vectoreal los deslizamientos como puntos
         Deslizamientos_puntos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos_puntos.shp')
         Desliz_Preproceso = data_path + '/Pre_Proceso/Desliz_Preproceso.shp'
         
@@ -341,10 +387,12 @@ elif os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
     CRS = Mov_Masa_Puntos.crs().authid()
     QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Mov_Masa, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile")
 
-
-# Si no hay mapas de ningún tipo se genera un aviso porque es necesario
 else:
+    # Si no hay mapas de ningún tipo se genera un aviso porque es necesario
     iface.messageBar().pushMessage("Movimientos en masa", 'No hay archivo de movimientos en masa', Qgis.Warning, 10)
 
+# Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
+elapsed_time = time() - start_time
+print("Elapsed time: %0.10f seconds." % elapsed_time)
     
 
