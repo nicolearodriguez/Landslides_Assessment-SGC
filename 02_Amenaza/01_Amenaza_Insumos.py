@@ -33,7 +33,8 @@ for i in list:
 shape.append('None')
 
 # Ubicación de las estaciones de precipitación
-Estaciones, ok = QInputDialog.getItem(None, "Estaciones pluviométricas", "Seleccione el archivo de las estaciones", shape, 0, False)
+Estaciones, ok = QInputDialog.getItem(None, "Estaciones pluviométricas", "Seleccione el archivo de las estaciones",
+                                      shape, 0, False)
 Ruta_Estaciones = data_path + '/' + Estaciones
 Estaciones = QgsVectorLayer(Ruta_Estaciones)
 
@@ -43,10 +44,13 @@ for field in Estaciones.fields():
     atributos_Estaciones.append(field.name())
 
 # Nombre del campo dónde se encuentran los códigos representativos de las estaciones
-Codigo_Estacion, ok = QInputDialog.getItem(None, "Códigos de las estaciones", "Campo dónde se encuentran los códigos representativos de las estaciones", atributos_Estaciones, 0, False)
+Codigo_Estacion, ok = QInputDialog.getItem(None, "Códigos de las estaciones",
+                                           "Campo dónde se encuentran los códigos representativos de las estaciones",
+                                           atributos_Estaciones, 0, False)
 
 # Ubicación de los sismos
-Sismos, ok = QInputDialog.getItem(None, "Sismos", "Seleccione el archivo de los sismos", shape, 0, False)
+Sismos, ok = QInputDialog.getItem(None, "Sismos",
+                                  "Seleccione el archivo de los sismos", shape, 0, False)
 Ruta_Sismos = data_path + '/' + Sismos
 Sismos = QgsVectorLayer(Ruta_Sismos)
 
@@ -56,33 +60,48 @@ for field in Sismos.fields():
     atributos_Sismos.append(field.name())
     
 # Nombre del campo dónde se encuentran la magnitud del sismo
-Magnitud_Sismo, ok = QInputDialog.getItem(None, "Magnitud del sismo", "Nombre del campo dónde se encuentran la magnitud del sismo", atributos_Sismos, 0, False)
+Magnitud_Sismo, ok = QInputDialog.getItem(None, "Magnitud del sismo",
+                                          "Nombre del campo dónde se encuentran la magnitud del sismo",
+                                          atributos_Sismos, 0, False)
    
 # Nombre del campo dónde se encuentran la unidad de la magitud
-Unidad_Sismo, ok = QInputDialog.getItem(None, "Unidad de la magnitud del sismo", "Nombre del campo dónde se encuentran la unidad de la magitud", atributos_Sismos, 0, False)
+Unidad_Sismo, ok = QInputDialog.getItem(None, "Unidad de la magnitud del sismo",
+                                        "Nombre del campo dónde se encuentran la unidad de la magitud",
+                                        atributos_Sismos, 0, False)
 
 # Nombre del campo dónde se encuentran la fecha de sismos
-Fecha_Sismo, ok = QInputDialog.getItem(None, "Fecha del sismo", "Nombre del campo dónde se encuentran la fecha del sismo", atributos_Sismos, 0, False)
+Fecha_Sismo, ok = QInputDialog.getItem(None, "Fecha del sismo",
+                                       "Nombre del campo dónde se encuentran la fecha del sismo",
+                                       atributos_Sismos, 0, False)
  
-# Umbral de días para los movimientos en masa
-dias = QInputDialog.getInt(None, 'Umbral de días de la fecha del inventario', 'Introduzca el umbral de días para el análisis del inventario de MM: ')
-dias = dias[0]
+# Movimientos en masa
+Mov_Masa = QgsVectorLayer(data_path + '/Pre_Proceso/Mov_Masa.shp')
+
+# Se listan los atributos en la capa seleccionada
+atributos_Mov_Masa = []
+for field in Mov_Masa.fields():
+    atributos_Mov_Masa.append(field.name())
 
 # Nombre del campo dónde se encuentran la fecha de MM
-Fecha_MM, ok = QInputDialog.getItem(None, "Fecha de MM", "Nombre del campo dónde se encuentran la fecha del MM", atributos_Sismos, 0, False)
+Fecha_MM, ok = QInputDialog.getItem(None, "Fecha de MM",
+                                    "Nombre del campo dónde se encuentran la fecha del MM",
+                                    atributos_Mov_Masa, 0, False)
  
+# Umbral de días para los movimientos en masa
+dias = QInputDialog.getInt(None, 'Umbral de días de la fecha del inventario',
+                           'Introduzca el umbral de días para el análisis del inventario de MM: ')
+dias = dias[0]
 
 # Número de grupos en los que se quiere hacer el análisis de amenaza por detonante sismo
-grupo = QInputDialog.getInt(None, 'Número de grupos', 'Introduce el número de grupos en el que se quiere hacer el análisis para el detonante sismo: ')
+grupo = QInputDialog.getInt(None, 'Número de grupos',
+                            'Introduzca el número de grupos en el que se quiere hacer el análisis para el detonante sismo: ')
 grupo = grupo[0]
 
 # Susceptibilidad por deslizamientos
-Susceptibilidad_Deslizamientos = QgsRasterLayer(data_path + '/Resultados/Susceptibilidad_Deslizamientos.tif', "Susceptibilidad_Deslizamientos")
+Susceptibilidad_Deslizamientos = QgsRasterLayer(data_path + '/Resultados/Susceptibilidad_Deslizamientos.tif',
+                                                "Susceptibilidad_Deslizamientos")
 
 ############################## PREPARACIÓN DE MOVIMIENTOS ##############################
-
-# Movimientos en masa
-Mov_Masa = QgsVectorLayer(data_path + '/Pre_Proceso/Mov_Masa.shp')
 
 # Se reproyecta la capa a coordenadas planas
 alg = "native:reprojectlayer"
@@ -158,13 +177,13 @@ Centroides = data_path + '/Pre_Proceso/Centroides_Cluster.shp'
 params = {'INPUT': Mov_Masa,'WEIGHT':'CLUSTER_ID','UID':'CLUSTER_ID','OUTPUT': Centroides}
 processing.run(alg, params)
 
-#Se crean los poligonos de análisis con base en los centroides
+#Se crean los poligonos de análisis de sismos con base en los centroides
 alg = "qgis:voronoipolygons"
 Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Sismo.shp'
 params = {'INPUT': Centroides,'BUFFER':50,'OUTPUT': Poligonos}
 processing.run(alg, params)
 
-#Se cortan los poligonos según la extensión de análisis
+#Se cortan los poligonos de sismos según la extensión de análisis
 alg = "gdal:clipvectorbyextent"
 Salida = data_path + '/Amenaza/Amenaza_Sismos.shp'
 extents = Susceptibilidad_Deslizamientos.extent()  # Capa de referencia de la extensión
@@ -172,7 +191,8 @@ xmin = extents.xMinimum()  # xmin de la extensión
 xmax = extents.xMaximum()  # xmax de la extensión
 ymin = extents.yMinimum()  # ymin de la extensión
 ymax = extents.yMaximum()  # ymax de la extensión
-params = {'INPUT': Poligonos,'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax),'OPTIONS':'','OUTPUT': Salida}
+params = {'INPUT': Poligonos,'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax),
+          'OPTIONS':'','OUTPUT': Salida}
 processing.run(alg, params)
 
 ############################## MUESTREO DE SUSCEPTIBILIDAD ##############################
@@ -265,20 +285,23 @@ processing.run(alg, params)
 alg = "qgis:rastersampling"
 rasterfile = data_path + '/Pre_Proceso/Poligonos_Voronoi.tif'
 Mov_Masa_Amenaza_Poligono = data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Poligono.shp'
-params = {'INPUT': Mov_Masa, 'RASTERCOPY': rasterfile, 'COLUMN_PREFIX': 'Poli_Voron', 'OUTPUT': Mov_Masa_Amenaza_Poligono}
+params = {'INPUT': Mov_Masa, 'RASTERCOPY': rasterfile,
+          'COLUMN_PREFIX': 'Poli_Voron', 'OUTPUT': Mov_Masa_Amenaza_Poligono}
 processing.run(alg, params)
  
 # Se muestrea la susceptibilidad por deslizamientos
 alg = "qgis:rastersampling"
 rasterfile = Susceptibilidad_Deslizamientos
 Mov_Masa_Amenaza_Desliz = data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Desliz.shp'
-params = {'INPUT': Mov_Masa_Amenaza_Poligono, 'RASTERCOPY': rasterfile, 'COLUMN_PREFIX': 'Susc_Desli', 'OUTPUT': Mov_Masa_Amenaza_Desliz}
+params = {'INPUT': Mov_Masa_Amenaza_Poligono, 'RASTERCOPY': rasterfile,
+          'COLUMN_PREFIX': 'Susc_Desli', 'OUTPUT': Mov_Masa_Amenaza_Desliz}
 processing.run(alg, params)
 
 # Se guarda el archivo como CSV
 Mov_Masa_Amenaza_Desliz = QgsVectorLayer(data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Desliz.shp')
 Archivo_csv = data_path + '/Amenaza/Mov_Masa_Amenaza.csv'
-QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Amenaza_Desliz, Archivo_csv, "utf-8", Mov_Masa_Amenaza_Desliz.crs(), driverName = "CSV")
+QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Amenaza_Desliz,
+                                        Archivo_csv, "utf-8", Mov_Masa_Amenaza_Desliz.crs(), driverName = "CSV")
 
 # Susceptibilidad por caídas
 Ruta_Caidas = data_path + '/Resultados/Susceptibilidad_Caida.tif'
@@ -290,13 +313,15 @@ if os.path.isfile(Ruta_Caidas) is True:
     alg = "qgis:rastersampling"
     rasterfile = Susceptibilidad_Caidas
     Mov_Masa_Amenaza_Caida = data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Caida.shp'
-    params = {'INPUT': Mov_Masa_Amenaza_Desliz, 'RASTERCOPY': rasterfile, 'COLUMN_PREFIX': 'Susc_Caida', 'OUTPUT': Mov_Masa_Amenaza_Caida}
+    params = {'INPUT': Mov_Masa_Amenaza_Desliz, 'RASTERCOPY': rasterfile,
+              'COLUMN_PREFIX': 'Susc_Caida', 'OUTPUT': Mov_Masa_Amenaza_Caida}
     processing.run(alg, params)
     
     # Se guarda el archivo como CSV
     Mov_Masa_Amenaza_Caida = QgsVectorLayer(data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Caida.shp')
     Archivo_csv = data_path + '/Amenaza/Mov_Masa_Amenaza.csv'
-    QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Amenaza_Caida, Archivo_csv, "utf-8", Mov_Masa_Amenaza_Caida.crs(), driverName = "CSV")
+    QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Amenaza_Caida,
+                                            Archivo_csv, "utf-8", Mov_Masa_Amenaza_Caida.crs(), driverName = "CSV")
 
 # Susceptibilidad por flujos
 Ruta_Flujos = data_path + '/Resultados/Susceptibilidad_Flujos.tif'
@@ -314,13 +339,15 @@ if os.path.isfile(Ruta_Flujos) is True:
     alg = "qgis:rastersampling"
     rasterfile = Susceptibilidad_Flujos
     Mov_Masa_Amenaza_Flujo = data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Flujo.shp'
-    params = {'INPUT': Shape, 'RASTERCOPY': rasterfile, 'COLUMN_PREFIX': 'Susc_Flujo', 'OUTPUT': Mov_Masa_Amenaza_Flujo}
+    params = {'INPUT': Shape, 'RASTERCOPY': rasterfile,
+              'COLUMN_PREFIX': 'Susc_Flujo', 'OUTPUT': Mov_Masa_Amenaza_Flujo}
     processing.run(alg, params)
     
     # Se guarda el archivo como CSV
     Mov_Masa_Amenaza_Flujo = QgsVectorLayer(data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Flujo.shp')
     Archivo_csv = data_path + '/Amenaza/Mov_Masa_Amenaza.csv'
-    QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Amenaza_Flujo, Archivo_csv, "utf-8", Mov_Masa_Amenaza_Flujo.crs(), driverName = "CSV")
+    QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Amenaza_Flujo,
+                                            Archivo_csv, "utf-8", Mov_Masa_Amenaza_Flujo.crs(), driverName = "CSV")
 
 ############################## ANÁLISIS DE SISMOS ##############################
 
@@ -385,32 +412,52 @@ Sismos['Kadirioglu'] = None
 # Se hace la conversión de unidades a Mw
 
 #Mb
-Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 6.2), 'Scordilis'] = 0.85 * Sismos.Magnitud + 1.03
-Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud <= 6.0), 'Grunthal'] = 8.17 - (42.04 - 6.42 * Sismos.Magnitud)**(1/2)
-Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 6.3), 'Akkar'] = 1.104 * Sismos.Magnitud - 0.194
-Sismos.loc[Sismos["Unidad"].str.startswith('mb'), 'Ulusay'] = 1.2413 * Sismos.Magnitud - 0.8994
-Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud >= 3.9) & (Sismos.Magnitud <= 6.8), 'Kadirioglu'] = 1.0319 * Sismos.Magnitud + 0.0223
+Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 6.2),
+           'Scordilis'] = 0.85 * Sismos.Magnitud + 1.03
+Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud <= 6.0),
+           'Grunthal'] = 8.17 - (42.04 - 6.42 * Sismos.Magnitud)**(1/2)
+Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 6.3),
+           'Akkar'] = 1.104 * Sismos.Magnitud - 0.194
+Sismos.loc[Sismos["Unidad"].str.startswith('mb'),
+           'Ulusay'] = 1.2413 * Sismos.Magnitud - 0.8994
+Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud >= 3.9) & (Sismos.Magnitud <= 6.8),
+           'Kadirioglu'] = 1.0319 * Sismos.Magnitud + 0.0223
 
 #Ml
-Sismos.loc[Sismos["Unidad"].str.startswith('ml') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 5), 'Grunthal'] = 0.0376 * Sismos.Magnitud**(2) + 0.646 * Sismos.Magnitud + 0.53
-Sismos.loc[Sismos["Unidad"].str.startswith('ml') & (Sismos.Magnitud >= 3.9) & (Sismos.Magnitud <= 6.8), 'Akkar'] = 0.953 * Sismos.Magnitud + 0.422
-Sismos.loc[Sismos["Unidad"].str.startswith('ml'), 'Ulusay'] = 0.7768 * Sismos.Magnitud + 1.5921
-Sismos.loc[Sismos["Unidad"].str.startswith('ml') & (Sismos.Magnitud >= 3.3) & (Sismos.Magnitud <= 6.6), 'Kadirioglu'] = 0.8095 * Sismos.Magnitud + 1.3003
+Sismos.loc[Sismos["Unidad"].str.startswith('ml') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 5),
+           'Grunthal'] = 0.0376 * Sismos.Magnitud**(2) + 0.646 * Sismos.Magnitud + 0.53
+Sismos.loc[Sismos["Unidad"].str.startswith('ml') & (Sismos.Magnitud >= 3.9) & (Sismos.Magnitud <= 6.8),
+           'Akkar'] = 0.953 * Sismos.Magnitud + 0.422
+Sismos.loc[Sismos["Unidad"].str.startswith('ml'),
+           'Ulusay'] = 0.7768 * Sismos.Magnitud + 1.5921
+Sismos.loc[Sismos["Unidad"].str.startswith('ml') & (Sismos.Magnitud >= 3.3) & (Sismos.Magnitud <= 6.6),
+           'Kadirioglu'] = 0.8095 * Sismos.Magnitud + 1.3003
 
 #Md
-Sismos.loc[Sismos["Unidad"].str.startswith('md') & (Sismos.Magnitud >= 3.7) & (Sismos.Magnitud <= 6), 'Akkar'] = 0.764 * Sismos.Magnitud + 1.379
-Sismos.loc[Sismos["Unidad"].str.startswith('md'), 'Ulusay'] = 0.9495 * Sismos.Magnitud + 0.4181
-Sismos.loc[Sismos["Unidad"].str.startswith('md') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 7.4), 'Kadirioglu'] = 0.7947 * Sismos.Magnitud + 1.342
+Sismos.loc[Sismos["Unidad"].str.startswith('md') & (Sismos.Magnitud >= 3.7) & (Sismos.Magnitud <= 6),
+           'Akkar'] = 0.764 * Sismos.Magnitud + 1.379
+Sismos.loc[Sismos["Unidad"].str.startswith('md'),
+           'Ulusay'] = 0.9495 * Sismos.Magnitud + 0.4181
+Sismos.loc[Sismos["Unidad"].str.startswith('md') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 7.4),
+           'Kadirioglu'] = 0.7947 * Sismos.Magnitud + 1.342
 
 #Ms
-Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 3) & (Sismos.Magnitud <= 6.1), 'Scordilis'] = 0.67 * Sismos.Magnitud + 2.07
-Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 6.2) & (Sismos.Magnitud <= 8.2), 'Scordilis'] = 0.99 * Sismos.Magnitud + 0.08
-Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud <= 7), 'Grunthal'] = 10.85 - (73.74 - 8.34 * Sismos.Magnitud)**(1/2)
-Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 3) & (Sismos.Magnitud <= 5.5), 'Akkar'] = 0.571 * Sismos.Magnitud + 2.484
-Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 5.5) & (Sismos.Magnitud <= 7.7), 'Akkar'] = 0.817 * Sismos.Magnitud + 1.176
-Sismos.loc[Sismos["Unidad"].str.startswith('ms'), 'Ulusay'] = 0.6798 * Sismos.Magnitud + 2.0402
-Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 3.4) & (Sismos.Magnitud <= 5.4), 'Kadirioglu'] = 0.5716 * Sismos.Magnitud + 2.498
-Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 5.5), 'Kadirioglu'] = 0.8126 * Sismos.Magnitud + 1.1723
+Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 3) & (Sismos.Magnitud <= 6.1),
+           'Scordilis'] = 0.67 * Sismos.Magnitud + 2.07
+Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 6.2) & (Sismos.Magnitud <= 8.2),
+           'Scordilis'] = 0.99 * Sismos.Magnitud + 0.08
+Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud <= 7),
+           'Grunthal'] = 10.85 - (73.74 - 8.34 * Sismos.Magnitud)**(1/2)
+Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 3) & (Sismos.Magnitud <= 5.5),
+           'Akkar'] = 0.571 * Sismos.Magnitud + 2.484
+Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 5.5) & (Sismos.Magnitud <= 7.7),
+           'Akkar'] = 0.817 * Sismos.Magnitud + 1.176
+Sismos.loc[Sismos["Unidad"].str.startswith('ms'),
+           'Ulusay'] = 0.6798 * Sismos.Magnitud + 2.0402
+Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 3.4) & (Sismos.Magnitud <= 5.4),
+           'Kadirioglu'] = 0.5716 * Sismos.Magnitud + 2.498
+Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 5.5),
+           'Kadirioglu'] = 0.8126 * Sismos.Magnitud + 1.1723
 
 #Se hace el promedio de los resultados para obtener Mw
 Sismos['Magnitud_Mw'] = Sismos[['Scordilis', 'Grunthal', 'Akkar', 'Ulusay', 'Kadirioglu']].mean(axis=1)
@@ -474,7 +521,8 @@ for j in range (0, len(Fechas)):
         X_Sismo = DF_Sismos.loc[Indices[i], 'X']
         Y_Sismo = DF_Sismos.loc[Indices[i], 'Y']
         # Se cálcula la distancia entre el sismos y los MM ocurridos en la fecha
-        DF_Fechas_MM.loc[DF_Fechas_MM['Fecha'] == Fecha, 'Distancia'] = ((DF_Fechas_MM.X - X_Sismo)**(2) + (DF_Fechas_MM.Y - Y_Sismo)**(2))**(1/2)
+        DF_Fechas_MM.loc[DF_Fechas_MM['Fecha'] == Fecha,
+                         'Distancia'] = ((DF_Fechas_MM.X - X_Sismo)**(2) + (DF_Fechas_MM.Y - Y_Sismo)**(2))**(1/2)
         
         #Se seleccionan los MM a una distancia menor de 50 km
         DF_Escogido = DF_Fechas_MM.loc[DF_Fechas_MM['Distancia'] < 50000] #50 km - 50000 m
@@ -502,22 +550,21 @@ DF_Mov_Masa_Lluvias = DF_Mov_Masa.loc['Lluvia']
 
 # Se exporta como csv los MM
 DF_Mov_Masa.reset_index(level=0, inplace=True)
-DF_Mov_Masa.reset_index().to_csv(data_path + '/Amenaza/Mov_Masa_Amenaza.csv', header = True, index = False)
+DF_Mov_Masa.reset_index().to_csv(data_path + '/Amenaza/Mov_Masa_Amenaza.csv',
+                       header = True, index = False)
 
 # Se exporta como csv los MM detonados por sismo
 DF_Mov_Masa_Sismos.reset_index(level=0, inplace=True)
 print(DF_Mov_Masa_Sismos)
-DF_Mov_Masa_Sismos.reset_index().to_csv(data_path + '/Amenaza/DF_Mov_Masa_Sismos.csv', header = True, index = False)
+DF_Mov_Masa_Sismos.reset_index().to_csv(data_path + '/Amenaza/DF_Mov_Masa_Sismos.csv',
+                              header = True, index = False)
 
 # Se exporta como csv los MM detonados por lluvia
 DF_Mov_Masa_Lluvias.reset_index(level=0, inplace=True)
 print(DF_Mov_Masa_Lluvias)
-DF_Mov_Masa_Lluvias.reset_index().to_csv(data_path + '/Amenaza/DF_Mov_Masa_Lluvias.csv', header = True, index = False)
+DF_Mov_Masa_Lluvias.reset_index().to_csv(data_path + '/Amenaza/DF_Mov_Masa_Lluvias.csv',
+                               header = True, index = False)
 
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
 elapsed_time = time() - start_time
 print("Elapsed time: %0.10f seconds." % elapsed_time)
-
-
-
-
