@@ -11,9 +11,10 @@ import numpy as np
 import processing
 import os
 
-# Ruta general de la ubicación de los archivos relativa a la ubicación del programa
-data_path = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
-data_path = data_path[0]
+# Ruta general de la ubicación de los archivos
+data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
+if ok == False:
+    raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
 
 #Se imprime una recomendación
@@ -218,7 +219,6 @@ def Wf(factor, Deslizamientos):
     # Se añade la capa reclasificada con los Wf al lienzo
     iface.addRasterLayer(data_path + f'/Resultados/Wf_{factor}.tif', f"Wf_{factor}")
 
-
 # Se lee el archivo correspondientes a deslizamientos
 Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos.shp')
 
@@ -239,7 +239,3 @@ for factor in (Factor_Condicionante):
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
 elapsed_time = time() - start_time
 print("Elapsed time: %0.10f seconds." % elapsed_time)
-
-
-
-

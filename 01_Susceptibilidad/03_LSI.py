@@ -10,18 +10,21 @@ import processing
 import gdal
 import os
 
-# Se pide la ruta general de la ubicación de los archivos relativa a la ubicación del programa
-data_path = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
-data_path = data_path[0]
+# Ruta general de la ubicación de los archivos
+data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
+if ok == False:
+    raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
 
 # Se imprime una recomendación
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
                         'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
 
-# Se pide las dimensiones del pixel
-Pixel = QInputDialog.getDouble(None, 'Dimesión del pixel', 'Introduzca el tamaño del pixel: ')
-cellsize = Pixel[0]
+# Dimensiones del pixel
+cellsize, ok = QInputDialog.getDouble(
+    None, 'Tamaño del pixel', 'Introduzca el tamaño del pixel: ')
+if ok == False:
+    raise Exception('Cancelar')
 
 # Se determina el momento en que inicia la ejcución del programa
 start_time = time()

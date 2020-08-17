@@ -16,6 +16,8 @@ start_time = time()
 
 # Ruta general de la ubicación de los archivos
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
+if ok == False:
+    raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
 
 #Se imprime una recomendación
@@ -32,9 +34,13 @@ for i in list:
         shape.append(i)
 shape.append('None')
 
+# ############################# INPUTS DE PRECIPITACIÓN ############################# #
+
 # Ubicación de las estaciones de precipitación
 Estaciones, ok = QInputDialog.getItem(None, "Estaciones pluviométricas", "Seleccione el archivo de las estaciones",
                                       shape, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
 Ruta_Estaciones = data_path + '/' + Estaciones
 Estaciones = QgsVectorLayer(Ruta_Estaciones)
 
@@ -47,10 +53,16 @@ for field in Estaciones.fields():
 Codigo_Estacion, ok = QInputDialog.getItem(None, "Códigos de las estaciones",
                                            "Campo dónde se encuentran los códigos representativos de las estaciones",
                                            atributos_Estaciones, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
+
+# ############################# INPUTS DE SIMOS ############################# #
 
 # Ubicación de los sismos
 Sismos, ok = QInputDialog.getItem(None, "Sismos",
                                   "Seleccione el archivo de los sismos", shape, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
 Ruta_Sismos = data_path + '/' + Sismos
 Sismos = QgsVectorLayer(Ruta_Sismos)
 
@@ -63,17 +75,36 @@ for field in Sismos.fields():
 Magnitud_Sismo, ok = QInputDialog.getItem(None, "Magnitud del sismo",
                                           "Nombre del campo dónde se encuentran la magnitud del sismo",
                                           atributos_Sismos, 0, False)
-   
+if ok == False:
+    raise Exception('Cancelar')
+    
 # Nombre del campo dónde se encuentran la unidad de la magitud
 Unidad_Sismo, ok = QInputDialog.getItem(None, "Unidad de la magnitud del sismo",
                                         "Nombre del campo dónde se encuentran la unidad de la magitud",
                                         atributos_Sismos, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
 
 # Nombre del campo dónde se encuentran la fecha de sismos
 Fecha_Sismo, ok = QInputDialog.getItem(None, "Fecha del sismo",
                                        "Nombre del campo dónde se encuentran la fecha del sismo",
                                        atributos_Sismos, 0, False)
- 
+if ok == False:
+    raise Exception('Cancelar')
+
+# Mensaje informativo
+QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta! : Cambio de unidades en los simos",
+                        'Tenga en cuenta que autores como Scordilis y Grunthal no hacen la conversión para todas las unidades, se recomienda revisar la documentación')
+
+# Se define con base en qué autor se quiere hacer la conversión de unidades
+Autores = ["Scordilis", "Grunthal", "Akkar", "Ulusay", "Kadirioglu", "Promedio"]
+Autor, ok = QInputDialog.getItem(None, "Norma de la regresión",
+                                 "Seleccione la norma con la que se hará la regresión", Autores, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
+
+# ############################# INPUTS DE MOVIMIENTOS EN MASA ############################# #
+
 # Movimientos en masa
 Mov_Masa = QgsVectorLayer(data_path + '/Pre_Proceso/Mov_Masa.shp')
 
@@ -86,16 +117,20 @@ for field in Mov_Masa.fields():
 Fecha_MM, ok = QInputDialog.getItem(None, "Fecha de MM",
                                     "Nombre del campo dónde se encuentran la fecha del MM",
                                     atributos_Mov_Masa, 0, False)
- 
+if ok == False:
+    raise Exception('Cancelar')
+
 # Umbral de días para los movimientos en masa
-dias = QInputDialog.getInt(None, 'Umbral de días de la fecha del inventario',
+dias, ok = QInputDialog.getInt(None, 'Umbral de días de la fecha del inventario',
                            'Introduzca el umbral de días para el análisis del inventario de MM: ')
-dias = dias[0]
+if ok == False:
+    raise Exception('Cancelar')
 
 # Número de grupos en los que se quiere hacer el análisis de amenaza por detonante sismo
-grupo = QInputDialog.getInt(None, 'Número de grupos',
+grupo, ok = QInputDialog.getInt(None, 'Número de grupos',
                             'Introduzca el número de grupos en el que se quiere hacer el análisis para el detonante sismo: ')
-grupo = grupo[0]
+if ok == False:
+    raise Exception('Cancelar')
 
 # Susceptibilidad por deslizamientos
 Susceptibilidad_Deslizamientos = QgsRasterLayer(data_path + '/Resultados/Susceptibilidad_Deslizamientos.tif',
@@ -408,6 +443,7 @@ Sismos['Grunthal'] = None
 Sismos['Akkar'] = None
 Sismos['Ulusay'] = None
 Sismos['Kadirioglu'] = None
+Sismos['Promedio'] = None
 
 # Se hace la conversión de unidades a Mw
 
@@ -460,11 +496,11 @@ Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 5.5),
            'Kadirioglu'] = 0.8126 * Sismos.Magnitud + 1.1723
 
 #Se hace el promedio de los resultados para obtener Mw
-Sismos['Magnitud_Mw'] = Sismos[['Scordilis', 'Grunthal', 'Akkar', 'Ulusay', 'Kadirioglu']].mean(axis=1)
-Sismos.loc[Sismos["Unidad"].str.startswith('mw'), 'Magnitud_Mw'] = Sismos.Magnitud
+Sismos.loc[Sismos["Unidad"].str.startswith('mw'), ['Scordilis', 'Grunthal', 'Akkar', 'Ulusay', 'Kadirioglu', 'Promedio']] = Sismos.Magnitud
+Sismos['Promedio'] = Sismos[['Scordilis', 'Grunthal', 'Akkar', 'Ulusay', 'Kadirioglu']].mean(axis=1)
 
 #Se seleccionan los sismos con la magnitud mayor a la minima 
-Sismo_Detonante = Sismos.loc[(Sismos.Magnitud_Mw >= 5)]
+Sismo_Detonante = Sismos.loc[(Sismos[Autor] >= 5)]
 Sismo_Detonante.reset_index().to_csv(data_path + '/Amenaza/Sismos.csv', header = True, index = False)
 print('Los sismos resultantes son: ')
 print(Sismo_Detonante)

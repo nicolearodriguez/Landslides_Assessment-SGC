@@ -14,11 +14,15 @@ start_time = time()
 
 # Ruta general de la ubicación de los archivos
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
+if ok == False:
+    raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
 
 #Se define cómo se quiere hacer la discritización
 Discri = ["Amenaza", "Amenaza - Tipo de movimiento"]
 Discritizacion, ok = QInputDialog.getItem(None, "Discretización", "Seleccione la cómo desea hacer la discretización de los MM", Discri, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
 
 # Se lee el inventario de movimientos en masa con fecha y susceptibilidad
 DF_Inv = pd.read_csv(data_path + '/Amenaza/DF_Mov_Masa_Sismos.csv')

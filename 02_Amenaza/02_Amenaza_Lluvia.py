@@ -31,6 +31,8 @@ start_time = time()
 
 # Ruta general de la ubicación de los archivos
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
+if ok == False:
+    raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
 
 # Se listan los archivos en la ruta general
@@ -45,38 +47,49 @@ for i in list:
 # Ubicación de la precipitación
 Precipitacion, ok = QInputDialog.getItem(None, "Precipitacion por estacion", "Seleccione el archivo de la precipitacion por estacion",
                                       csv, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
 Ruta_Precipitacion = data_path + '/' + Precipitacion
 
 # Se define el número de días de lluvia antecedente que desea acumular
-d_ant = QInputDialog.getInt(None, 'Número de días antecedentes',
+d_ant, ok = QInputDialog.getInt(None, 'Número de días antecedentes',
                             'Introduce el número de días para la lluvia antecedentes: ')
-d_ant = d_ant[0]
+if ok == False:
+    raise Exception('Cancelar')
 
 # Desea ajustar las fechas de movimientos en masa (Si o No)
 Opciones = ["Si", "No"]
 Ajuste, ok = QInputDialog.getItem(None, "Ajuste en las fechas del inventario",
                                   "Seleccione si desea hacer un ajuste en las fechas del inventario", Opciones, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
 
 if Ajuste == "Si":
     # Se defina el número de días en el que se puede ajustar las fechas de los movimientos
-    umbral_dias = QInputDialog.getInt(None, 'Umbral de días antecedentes',
+    umbral_dias, ok = QInputDialog.getInt(None, 'Umbral de días antecedentes',
                                       'Introduzca el número de días umbral para el ajuste: ')
-    umbral_dias = umbral_dias[0]
+    if ok == False:
+        raise Exception('Cancelar')
 
     # Se defina la precipitación umbral para el ajuste de las fechas de los movimientos
-    umbral_lluvia = QInputDialog.getInt(None, 'Umbral de lluvia',
+    umbral_lluvia, ok= QInputDialog.getInt(None, 'Umbral de lluvia',
                                         'Introduzca la lluvia umbral con la que se hará el ajuste: ')
-    umbral_lluvia = umbral_lluvia[0]
+    if ok == False:
+        raise Exception('Cancelar')
 
 # Se define con que norma desea hacer la regresión (L1 o L2)
 Normas = ["L1", "L2"]
 Norma, ok = QInputDialog.getItem(None, "Norma de la regresión",
                                  "Seleccione la norma con la que se hará la regresión", Normas, 0, False)
-
+if ok == False:
+    raise Exception('Cancelar')
+    
 # Se define cómo se quiere hacer la discritización
 Discri = ["Amenaza", "Amenaza - Tipo de movimiento"]
 Discritizacion, ok = QInputDialog.getItem(None, "Discretización",
                                           "Seleccione la cómo desea hacer la discretización de los MM", Discri, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
 
 # Ingresar registro de precipitación diaria para la estación en análisis
 DF_Precipitacion_diaria = pd.read_csv(Ruta_Precipitacion)
