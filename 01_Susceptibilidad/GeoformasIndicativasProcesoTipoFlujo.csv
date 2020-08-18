@@ -1,0 +1,30 @@
+AMBIENTE GEOMORFOLOGICO;UNIDAD/SUBUNIDAD GEOMORFOLOGICA;ACRONIMO;SUSCEPTIBILIDAD;VALOR
+DENUDACIONAL;Cono o lobulo de flujo indiferenciado;Dft;Alta;2
+DENUDACIONAL;lobulo y cono de avalancha de detritos;Dlcad;Alta;2
+DENUDACIONAL;lobulo y cono de avalancha de rocas;Dlcar;Alta;2
+FLUVIAL;Abanico aluvial;Faa;Alta;2
+FLUVIAL;Abanico aluvial antiguo;Faaa;Alta;2
+FLUVIAL;Abanico aluvial subreciente;Faas;Alta;2
+FLUVIAL;Abanico aluvial actual;Faaac;Alta;2
+FLUVIAL;Abanico aluvial incisado;Faai;Alta;2
+FLUVIAL;Abanicos aluviales coalescentes no diferenciados (bajadas);Fac;Alta;2
+FLUVIAL;Cono de deyección;Fcdy;Alta;2
+VOLCÁNICO;Cono laharico;Vcl;Media;1
+VOLCÁNICO;Escarpe de flujo laharico aterrazado;Vflae;Media;1
+VOLCÁNICO;Escarpe de flujo piroclastico aterrazado;Vfpe;Media;1
+VOLCÁNICO;Flujo laharico aterrazado;Vfla;Media;1
+VOLCÁNICO;Flujo piroclastico aterrazado;Vfp;Media;1
+VOLCÁNICO;lobulo de flujo laharico;Vlfp;Media;1
+VOLCÁNICO;lobulo de flujo piroclastico;Vlfl;Media;1
+GLACIAR;Cono y lobulo de gelifracción;Gclg;Media;1
+GLACIAR;Conos glaciofluviales;Gcgf;Media;1
+GLACIAR;Flujo volcánico glaciado;Gfv;Media;1
+FLUVIAL;Albardones o dique natural;Fa;Media;1
+FLUVIAL;Complejo de orillales;Fco;Media;1
+FLUVIAL;Planicie aluvial confinada;Fpac;Media;1
+FLUVIAL;Plano o llanura de inundación;Fpi;Media;1
+FLUVIAL;Terraza de acumulacion;Fta;Media;1
+FLUVIAL;Escarpe de terraza de acumulacion;Ftae;Media;1
+FLUVIAL;Terraza de acumulacion subreciente;Ftas;Media;1
+FLUVIAL;Terraza de acumulacion antigua;Ftan;Media;1
+FLUVIAL;Plano anegadizo;Fpa;Media;1

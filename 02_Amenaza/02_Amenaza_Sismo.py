@@ -376,5 +376,8 @@ else:
                 # Se hace el cambio de los atributos
                 Amenaza_Sismo.dataProvider().changeAttributeValues({fid: attrs})
 
+Amenaza_Sismo = QgsVectorLayer(data_path + '/Amenaza/Amenaza_Sismos.shp', 'Amenaza_Sismo')
+QgsProject.instance().addMapLayer(Amenaza_Sismo)
+
 elapsed_time = time() - start_time
 print("Elapsed time: %0.10f seconds." % elapsed_time)

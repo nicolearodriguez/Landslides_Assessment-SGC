@@ -98,8 +98,8 @@ QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta! : Cambio de unida
 
 # Se define con base en qué autor se quiere hacer la conversión de unidades
 Autores = ["Scordilis", "Grunthal", "Akkar", "Ulusay", "Kadirioglu", "Promedio"]
-Autor, ok = QInputDialog.getItem(None, "Norma de la regresión",
-                                 "Seleccione la norma con la que se hará la regresión", Autores, 0, False)
+Autor, ok = QInputDialog.getItem(None, "Conversión unidades",
+                                 "Seleccione la formula con base en la cual se hará la conversión de unidades", Autores, 0, False)
 if ok == False:
     raise Exception('Cancelar')
 

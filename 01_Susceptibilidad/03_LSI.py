@@ -157,6 +157,7 @@ for sublist in rasterList:
 df = pd.DataFrame(flat_list)
 df = df.drop(df[df[0] < -100].index) #LSI_Min
 df = df.drop(df[df[0] > 100].index) #LSI_Max
+df = df.dropna(axis=0, subset=[0])
 
 # Se crea el dataframe para realizar el proceso de la curva LSI
 DF_Susceptibilidad = pd.DataFrame(columns=['LSI_Min', 'LSI_Max', 'PIXLsi', 'PIXDesliz', 'PIXLsiAcum',

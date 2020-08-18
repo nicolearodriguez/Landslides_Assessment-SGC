@@ -10,11 +10,29 @@ import numpy as np
 import processing
 import os
 
+#Se determina el momento en que inicia la ejcución del programa
+start_time = time()
+
 # Ruta general de la ubicación de los archivos
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
 if ok == False:
     raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
+
+# Se listan los archivos en la ruta general
+list = listdir(data_path)
+
+# Se determinan los archivos con extensión .shp en la ruta
+csv = []
+for i in list:
+    if i[-4:] == '.csv':
+        csv.append(i)
+
+# Zonas de depósito
+GeoformasIndicativas, ok = QInputDialog.getItem(None, "Geoformas indicativas de procesos tipo flujo",
+                                           "Seleccione el archivo de las geoformas indicativas de procesos tipo flujo", csv, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
 
 #Asiganción de valor según SUBUNIDADES GEOMORFOLOGICAS INDICATIVAS
 #Geoformas indicativas de proceso tipo flujo
@@ -56,7 +74,7 @@ for i in range(0, len(DF_SubunidadesGeoform)):
         # Se reemplazará el valor de susceptibilidad correspondiente que se encuentra en la lista de subunidades
         Valor = DF_GeoformasIndicativas.loc[Caract]['VALOR']
         
-        if Valor = np.nan:
+        if Valor == np.nan:
             Susceptibilidad = ["Alta", "Media", "Baja"]
             Susceptibilidad, ok = QInputDialog.getItem(None, "No se encontro",
                                      f"Seleccione la susceptibilidad para la {Subunidad}", Susceptibilidad, 0, False)
@@ -82,12 +100,15 @@ DF_SubunidadesGeoform.reset_index().to_csv(data_path+'/Pre_Proceso/DF_RasterFluj
 alg="native:reclassifybylayer"
 Factor_Condicionante = data_path + '/Pre_Proceso/SubunidadesGeomorf.tif'
 DF_SubunidadesGeomorf = data_path+'/Pre_Proceso/DF_RasterFlujo_SubunidadesGeoform.csv'
-Susceptibilidad_Flujo = data_path + '/03 Resultados/Susceptibilidad_Flujo.tif'
+Susceptibilidad_Flujo = data_path + '/Resultados/Susceptibilidad_Flujo.tif'
 params={'INPUT_RASTER': Factor_Condicionante, 'RASTER_BAND': 1, 'INPUT_TABLE': DF_SubunidadesGeomorf, 'MIN_FIELD': 'ID',
-        'MAX_FIELD': 'ID', 'VALUE_FIELD': 'Valor', 'NO_DATA': -9999,'RANGE_BOUNDARIES': 2,'NODATA_FOR_MISSING': False,'DATA_TYPE': 5,
+        'MAX_FIELD': 'ID', 'VALUE_FIELD': 'Valor', 'NO_DATA': -9999,'RANGE_BOUNDARIES': 2,'NODATA_FOR_MISSING': True,'DATA_TYPE': 5,
         'OUTPUT': Susceptibilidad_Flujo}
 processing.run(alg,params)
 
 Susceptibilidad_Flujo = QgsRasterLayer(Susceptibilidad_Flujo,"Susceptibilidad Flujo")
 QgsProject.instance().addMapLayer(Susceptibilidad_Flujo)
 
+# Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
+elapsed_time = time() - start_time
+print("Elapsed time: %0.10f seconds." % elapsed_time)

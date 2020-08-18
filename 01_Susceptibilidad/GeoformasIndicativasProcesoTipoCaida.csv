@@ -1,0 +1,43 @@
+AMBIENTE GEOMORFOLOGICO;UNIDAD/SUBUNIDAD GEOMORFOLOGICA;ACRONIMO;SUSCEPTIBILIDAD;VALOR
+DENUDACIONAL;Cono flujos de detritos;Dfe;Alta;1
+DENUDACIONAL;Cono de talus;Dct;Alta;1
+DENUDACIONAL;Cerro remanente o relicto;Dcrem;Alta;1
+DENUDACIONAL;Escarpe de erosión mayor;Deem;Alta;1
+DENUDACIONAL;Escarpe de erosión menor;Deeme;Alta;1
+DENUDACIONAL;Escarpe facetado;Def;Alta;1
+FLUVIAL;Escarpe de abanico fluvial;Fea;Alta;1
+FLUVIAL;Escarpe de terraza de erosión;Ftee;Alta;1
+MARINO COSTERO;Acantilado;Ma;Alta;1
+ESTRUCTURAL;Cerro estructural;Sce;Alta;1
+ESTRUCTURAL;Colina estructural ;Sces;Alta;1
+ESTRUCTURAL;Escarpe de línea de falla;Slfe;Alta;1
+ESTRUCTURAL;Escarpe de meseta estructural ;Sme;Alta;1
+ESTRUCTURAL;Faceta triangular; Sft;Alta;1
+ESTRUCTURAL;Ladera contrapendiente ;Slcp;Alta;1
+ESTRUCTURAL;Ladera de contrapendiente de sierra homoclinal ;Sshlc;Alta;1
+ESTRUCTURAL;Ladera contrapendiente de sierra anticlinal ;Ssalc;Alta;1
+ESTRUCTURAL;Ladera contrapendiente de sierra sinclinal ;Ssslc;Alta;1
+ESTRUCTURAL;Ladera de contrapendiente de cuesta; Sclc;Alta;1
+ESTRUCTURAL;Ladera de contrapendiente de espinazo ;Selc;Alta;1
+ESTRUCTURAL;Meseta estructural ;Sm;Alta;1
+ESTRUCTURAL;Ladera estructural de sierra homoclinal ;Sshle;Alta;1
+ESTRUCTURAL;Ladera estructural de sierra anticlinal ;Ssale;Alta;1
+ESTRUCTURAL;Ladera estructural de sierra sinclinal ;Sssle;Alta;1
+ESTRUCTURAL;Ladera estructural de cuesta ;Scle;Alta;1
+ESTRUCTURAL;Ladera estructural de espinazo; Sele;Alta;1
+ESTRUCTURAL;Plancha; Sp;Alta;1
+ESTRUCTURAL;Sierra de barras estructurales ;Ssbe;Alta;1
+VOLCÁNICO;Escarpe de flujo de lava (Vfle);Vfle;Alta;1
+VOLCÁNICO;Ladera volcánica (Vl);Vl;Alta;1
+GLACIAR;Ladera contrapendiente de sierra homoclinal glaciada;Gshlc;Alta;1
+GLACIAR;Ladera contrapendiente de sierra anticlinal glaciada;Gsalc;Alta;1
+GLACIAR;Ladera contrapendiente de sierra sinclinal glaciada;Gsslc;Alta;1
+GLACIAR;Ladera contrapendiente de cuesta estructural glaciada;Gclc;Alta;1
+GLACIAR;Ladera de contrapendiente de espinazo glaciado;Geglc;Alta;1
+GLACIAR;Ladera estructural de sierra homoclinal glaciada;Gshle;Alta;1
+GLACIAR;Ladera estructural de sierra anticlinal glaciada;Gsale;Alta;1
+GLACIAR;Ladera estructural de cuesta estructural glaciada;Gcle;Alta;1
+GLACIAR;Ladera estructural de espinazo glaciado;Gegle;Alta;1
+CÁRSTICO;Escarpe cárstico;Kec;Alta;1
+ANTRÓPICO;Canteras ;Ac;Alta;1
+ANTRÓPICO;Explotación minera;Aemc;Alta;1

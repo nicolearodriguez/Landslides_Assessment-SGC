@@ -10,21 +10,21 @@ import numpy as np
 import processing
 import os
 
+#Se determina el momento en que inicia la ejcución del programa
+start_time = time()
+
 # Ruta general de la ubicación de los archivos
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
 if ok == False:
     raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
 
-#Se determina el momento en que inicia la ejcución del programa
-start_time = time()
-
 # Se listan los archivos en la ruta general
 list = listdir(data_path)
 
 #Se imprime una recomendación
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
-                        'Se recomienda que el campo representativo para los factores condicionantes corresponda a acronimos de forma que no haya interferencia con caracteres que Qgis no distinga tales como ñ y tildes')
+                        'Se recomienda que el campo representativo para los factores condicionantes corresponda a acronimos de forma que no haya interferencia con caracteres que Qgis no distinga tales como ñ y tildes; además, en el caso de las subunidades geomorfologicas es necesario que estos despues coincidan con las subunidades indicativas de procesos como flujo y caidas')
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
                         'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
@@ -147,47 +147,44 @@ if ok == False:
 # Cambio de tamaño de pixel pendiente
 
 def cambiopixel(Factor_Condicionante):
-    
     # Se ingresa el archivo vectorial del factor condicionante
     Ruta_Factor, ok = QInputDialog.getItem(None, f"{Factor_Condicionante}", f"Seleccione el archivo de {Factor_Condicionante}", raster, 0, False)
     if ok == False:
         raise Exception('Cancelar')
     Ruta_Factor = data_path + '/' + Ruta_Factor
-    Factor = QgsRasterLayer(Ruta_Factor)
     
-    pipe = QgsRasterPipe()
-    # Se obtienen la extensión del factor condicionante
-    extent = Factor.extent()
-    # Se determina dimensiones del pixel actual
-    width_layer = Factor.width()
-    height_layer = Factor.height()
-    # Se determina el número de filas y columnas para el pixel actual
-    X = Factor.rasterUnitsPerPixelX()
-    Y = Factor.rasterUnitsPerPixelY()
-    # Se calcula el numero numero de filas y columas esperadas
-    width = (X/cellsize)*width_layer
-    height = (Y/cellsize)*height_layer
-    renderer = Factor.renderer()
-    provider = Factor.dataProvider()
-    # Se determina el CRS de la capa
-    crs = Factor.crs().toWkt()
-    pipe.set(provider.clone())
-    pipe.set(renderer.clone())
-    # Se crea el nuevo archivo raster correspondiente
-    file_writer = QgsRasterFileWriter(data_path + f'/Pre_Proceso/{Factor}.tif')
-    file_writer.writeRaster(pipe, width, height, extent, layer.crs())
+    if os.path.isfile(Ruta_Factor) is True:
+        Factor = QgsRasterLayer(Ruta_Factor)
+        pipe = QgsRasterPipe()
+        # Se obtienen la extensión del factor condicionante
+        extent = Factor.extent()
+        # Se determina dimensiones del pixel actual
+        width_layer = Factor.width()
+        height_layer = Factor.height()
+        # Se determina el número de filas y columnas para el pixel actual
+        X = Factor.rasterUnitsPerPixelX()
+        Y = Factor.rasterUnitsPerPixelY()
+        # Se calcula el numero numero de filas y columas esperadas
+        width = (X/cellsize)*width_layer
+        height = (Y/cellsize)*height_layer
+        renderer = Factor.renderer()
+        provider = Factor.dataProvider()
+        # Se determina el CRS de la capa
+        crs = Factor.crs().toWkt()
+        pipe.set(provider.clone())
+        pipe.set(renderer.clone())
+        # Se crea el nuevo archivo raster correspondiente
+        file_writer = QgsRasterFileWriter(data_path + f'/Pre_Proceso/{Factor_Condicionante}.tif')
+        file_writer.writeRaster(pipe, width, height, extent, Factor.crs())
+        
+        # Se añade la capa raster al lienzo
+        iface.addRasterLayer(data_path + f'/Pre_Proceso/{Factor_Condicionante}.tif', f"{Factor_Condicionante}")
 
 # Se listan los factores condicionantes los cuales deben coincidir con los de rasterize más los continuos 
 Factor_Condicionante = ['Pendiente', 'CurvaturaPlano']
 
 # Se recorre la lista de factores condicionantes
 for factor in (Factor_Condicionante):
-    # Se determina la posible ruta del factor condicionante
-    ruta = data_path + f'/Pre_Proceso/{factor}.tif'
-    
-    # Si el archivo no existe se continua 
-    if os.path.isfile(ruta) is False:
-        continue
     # Se aplica la función del peso al factor condicionante
     cambiopixel(factor)
 

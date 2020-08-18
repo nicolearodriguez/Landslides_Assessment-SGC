@@ -619,7 +619,7 @@ else:
     Amenaza_Lluvia.dataProvider().addAttributes([QgsField("Alta", QVariant.Double)])
 
     # Se guarda la edición
-    Amenaza_Sismo.updateFields()
+    Amenaza_Lluvia.updateFields()
        
     # Se determina el índice de la columna que fue agregada
     Baja = Amenaza_Lluvia.fields().indexFromName("Baja")
@@ -671,6 +671,9 @@ else:
                 attrs = { Baja : Ptem_Baja, Media : Ptem_Media, Alta : Ptem_Alta }
                 # Se hace el cambio de los atributos
                 Amenaza_Lluvia.dataProvider().changeAttributeValues({fid: attrs})
+
+Amenaza_Lluvia = QgsVectorLayer(data_path + '/Amenaza/Amenaza_Lluvia.shp', 'Amenaza_Lluvia')
+QgsProject.instance().addMapLayer(Amenaza_Lluvia)
 
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
 elapsed_time = time() - start_time
