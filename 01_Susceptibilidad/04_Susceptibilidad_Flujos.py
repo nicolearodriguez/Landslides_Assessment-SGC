@@ -1,3 +1,14 @@
+"""
+@author: Nicole Alejadra Rodríguez Vargas
+nicole.rodriguez@correo.uis.edu.co
+"""
+
+"""
+En esta programación se caracteriza la susceptibilidad por movimientos en masa tipo flujo,
+el procedimiento solo consta del análisis de subunidades indicativas de este proceso, a 
+partir de estas se caracteriza la susceptibilidad por estos procesos.
+"""
+
 from PyQt5.QtWidgets import QInputDialog
 from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import QVariant
@@ -28,7 +39,7 @@ for i in list:
     if i[-4:] == '.csv':
         csv.append(i)
 
-# Zonas de depósito
+# Geoformas indicativas 
 GeoformasIndicativas, ok = QInputDialog.getItem(None, "Geoformas indicativas de procesos tipo flujo",
                                            "Seleccione el archivo de las geoformas indicativas de procesos tipo flujo", csv, 0, False)
 if ok == False:
@@ -36,14 +47,16 @@ if ok == False:
 
 #Asiganción de valor según SUBUNIDADES GEOMORFOLOGICAS INDICATIVAS
 #Geoformas indicativas de proceso tipo flujo
-FILE_NAME = data_path+'/01 Entradas/GeoformasIndicativasProcesoTipoFlujo.csv'
+FILE_NAME = data_path + '/' + GeoformasIndicativas
 DF_GeoformasIndicativas = pd.read_csv(FILE_NAME, delimiter=";",encoding='latin-1')
+# Se extraen solo los tres primeros caracteres del acronimo teniendo en cuenta que las coincidencias no son exactas
 DF_GeoformasIndicativas['CODIGO'] = DF_GeoformasIndicativas['ACRONIMO'].astype(str).str[0:3]
 
 #Geoformas existentes en la capa
-FILE_NAME = data_path+'/02 PreProceso/DF_Raster_SubunidadesGeomorf.csv'
+FILE_NAME = data_path + '/Pre_Proceso/DF_Raster_SubunidadesGeomorf.csv'
 DF_SubunidadesGeoform = pd.read_csv(FILE_NAME, delimiter=",",encoding='latin-1')
 DF_SubunidadesGeoform.drop(['index'],axis='columns',inplace=True)
+# Se extraen solo los tres primeros caracteres del acronimo teniendo en cuenta que las coincidencias no son exactas
 DF_SubunidadesGeoform['Caract_3'] = DF_SubunidadesGeoform['Caract'].astype(str).str[0:3]
 
 for i in range(0, len(DF_SubunidadesGeoform)): 
@@ -66,13 +79,18 @@ for i in range(0, len(DF_SubunidadesGeoform)):
             Valor = 0
             
         DF_SubunidadesGeoform.loc[i, 'Valor'] = Valor
-    
     else:
-        
-        # Si la longitud es diferente de 0 se pondrá como indice la columna del acronimo
-        DF_GeoformasIndicativas.set_index('CODIGO', inplace=True)
         # Se reemplazará el valor de susceptibilidad correspondiente que se encuentra en la lista de subunidades
-        Valor = DF_GeoformasIndicativas.loc[Caract]['VALOR']
+        if len(DF_GeoformasIndicativas[DF_GeoformasIndicativas['CODIGO'].isin([Caract])])> 1:
+            # Si la longitud es diferente de 0 se pondrá como indice la columna del acronimo
+            DF_GeoformasIndicativas.set_index('CODIGO', inplace=True)
+            #Se extrae el valor
+            Valor = DF_GeoformasIndicativas.loc[Caract]['VALOR'][0]
+        else:
+            # Si la longitud es diferente de 0 se pondrá como indice la columna del acronimo
+            DF_GeoformasIndicativas.set_index('CODIGO', inplace=True)
+            #Se extrae el valor
+            Valor = DF_GeoformasIndicativas.loc[Caract]['VALOR']
         
         if Valor == np.nan:
             Susceptibilidad = ["Alta", "Media", "Baja"]

@@ -1,3 +1,14 @@
+"""
+@author: Nicole Alejadra Rodríguez Vargas
+nicole.rodriguez@correo.uis.edu.co
+"""
+
+"""
+En esta programación se hace el análisis LSI a partir de los pesos de evidencia, se realiza
+la curva de éxito y se comprueba si esta cumple, de ser así se clasifica la función LSI según
+la categoría de susceptibilidad por deslizamientos que le corresponda.
+"""
+
 from PyQt5.QtWidgets import QInputDialog
 from qgis.PyQt.QtCore import QVariant
 from qgis.core import QgsProject
@@ -77,9 +88,8 @@ xmin = extents.xMinimum()  # xmin de la extensión
 xmax = extents.xMaximum()  # xmax de la extensión
 ymin = extents.yMinimum()  # ymin de la extensión
 ymax = extents.yMaximum()  # ymax de la extensión
-CRS = QgsCoordinateReferenceSystem('EPSG:3116')
 params = {'EXPRESSION': Expresion, 'LAYERS': [Wf_CurvaturaPlano], 'CELLSIZE': cellsize,
-          'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax), 'CRS': CRS, 'OUTPUT': Output}
+          'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax), 'CRS': None, 'OUTPUT': Output}
 processing.run(alg, params)
 
 # Se agrega la capa raster LSI al lienzo
@@ -108,8 +118,8 @@ else:
     alg = "gdal:cliprasterbymasklayer"
     Factor_Condicionante = rasterfile
     Deslizamiento_Condicion = data_path + '/Pre_Proceso/DeslizamientosLSI.tif'
-    params = {'INPUT': Factor_Condicionante, 'MASK': Deslizamientos, 'SOURCE_CRS': QgsCoordinateReferenceSystem('EPSG:3116'),
-    'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3116'), 'NODATA': None, 'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True,
+    params = {'INPUT': Factor_Condicionante, 'MASK': Deslizamientos, 'SOURCE_CRS': None,
+    'TARGET_CRS': None, 'NODATA': None, 'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True,
     'KEEP_RESOLUTION': False, 'SET_RESOLUTION': False, 'X_RESOLUTION': None, 'Y_RESOLUTION': None, 'MULTITHREADING': False,
     'OPTIONS': '', 'DATA_TYPE': 0, 'EXTRA': '', 'OUTPUT': Deslizamiento_Condicion}
     processing.run(alg, params)
@@ -176,7 +186,7 @@ DF_Susceptibilidad.loc[0, 'Y'] = 0
 # Se definen los percentiles en los que se harán los intervalos
 n_percentil = sorted(range(101), reverse=True)
 
-#Se calcula el perfecntil cada 1 %
+#Se calcula el percentil cada 1 %
 percentiles = [np.percentile(df[0], 100) + 0.001]
 for i in range(1, len(n_percentil)-1):
     Valor = np.percentile(df[0], n_percentil[i])
@@ -224,11 +234,12 @@ for i in range(0, len(DF_Susceptibilidad)-1):
 Area_Total = DF_Susceptibilidad['Area'].sum()
 print('El área bajo la curva es: ', Area_Total)
 
-# Si el área bajo la curva da menor a 0.7 (70%) se generá un mensaje de advertencia, de lo contrario se generá un mensaje para corroborar que está correcto
+# Si el área bajo la curva da menor a 0.7 (70%) se generá un mensaje de advertencia,
+# de lo contrario se generá un mensaje para corroborar que está correcto
 if Area_Total > 0.7:
     iface.messageBar().pushMessage("Ajuste LSI", 'La función final de susceptibilidad es aceptable', Qgis.Info, 5)
 else:
-    iface.messageBar().pushMessage("Ajuste LSI", 'La función final de susceptibilidad NO es aceptable', Qgis.Warning, 5)
+    iface.messageBar().pushMessage("Ajuste LSI", 'La función final de susceptibilidad NO es aceptable', Qgis.Warning, 10)
 
 # Se identifican los valores Y para asignar el rango de susceptibilidad
 # Alta
@@ -248,7 +259,7 @@ DF_Susceptibilidad.reset_index().to_csv(data_path + '/Pre_Proceso/DF_LSI.csv', h
 # Extracción de los valores para la curva de éxito.
 x = DF_Susceptibilidad['X']
 y = DF_Susceptibilidad['Y']
-# Se hace las espacialización de los puntos.
+# Se hace las espacialización de los valores
 fig, ax = plt.subplots()
 ax.plot(x, y, color='black', label = "Success curve")
 # Se hacen las líneas correspondientes para clasificar la susceptibilidad

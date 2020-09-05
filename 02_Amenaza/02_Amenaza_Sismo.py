@@ -1,13 +1,29 @@
-# -*- coding: utf-8 -*-
 """
-Created on Fri Jul 17 13:19:20 2020
-
-@author: HOGAR
+@author: Nicole Alejadra Rodríguez Vargas
+nicole.rodriguez@correo.uis.edu.co
 """
 
-import math
-import pandas as pd
+"""
+En está programación se calcula la probabilidad de amenaza para movimientos en masa detonados por sismos,
+la metodología es más simple que para los movimientos detonados por lluvia, para sismos se parte de los
+sismos por cada uno de polígonos y en que rango de tiempo (años) han sido detonados, a partir de estos 
+parametros se aplica la probabilidad de Poisson y se calcula la probabilidad para  posteriormente 
+espacializarla en el polígono correspondiente.
+"""
+
+from PyQt5.QtWidgets import QInputDialog
+from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtCore import QVariant
+from qgis.gui import QgsMessageBar
+from qgis.core import QgsProject
+from os import listdir
 from time import time
+import pandas as pd
+import numpy as np
+import processing
+import datetime
+import math
+import os
 
 #Se determina el momento en que inicia la ejecución del programa
 start_time = time()
@@ -376,6 +392,7 @@ else:
                 # Se hace el cambio de los atributos
                 Amenaza_Sismo.dataProvider().changeAttributeValues({fid: attrs})
 
+# Se añade la capa al lienzo
 Amenaza_Sismo = QgsVectorLayer(data_path + '/Amenaza/Amenaza_Sismos.shp', 'Amenaza_Sismo')
 QgsProject.instance().addMapLayer(Amenaza_Sismo)
 

@@ -1,3 +1,16 @@
+"""
+@author: Nicole Alejadra Rodríguez Vargas
+nicole.rodriguez@correo.uis.edu.co
+"""
+
+"""
+En esta programación se desarrollan los insumos para las posteriores programaciones del análisis de
+susceptibilidad, en esta etapa se hace la rasterización de los factores condicionantes discretos
+los cuales entran como capas vectoriales, además se extraen los deslizamientos y caídas, también
+se preparan los movimientos en masa como geometría de puntos para ser empleados posteriormente en
+el análisis de amenaza.
+"""
+
 from PyQt5.QtWidgets import QInputDialog
 from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import QVariant
@@ -142,52 +155,6 @@ cellsize, ok = QInputDialog.getDouble(
 if ok == False:
     raise Exception('Cancelar')
 
-# ########################## PENDIENTE/CURVATURA ########################## #
-
-# Cambio de tamaño de pixel pendiente
-
-def cambiopixel(Factor_Condicionante):
-    # Se ingresa el archivo vectorial del factor condicionante
-    Ruta_Factor, ok = QInputDialog.getItem(None, f"{Factor_Condicionante}", f"Seleccione el archivo de {Factor_Condicionante}", raster, 0, False)
-    if ok == False:
-        raise Exception('Cancelar')
-    Ruta_Factor = data_path + '/' + Ruta_Factor
-    
-    if os.path.isfile(Ruta_Factor) is True:
-        Factor = QgsRasterLayer(Ruta_Factor)
-        pipe = QgsRasterPipe()
-        # Se obtienen la extensión del factor condicionante
-        extent = Factor.extent()
-        # Se determina dimensiones del pixel actual
-        width_layer = Factor.width()
-        height_layer = Factor.height()
-        # Se determina el número de filas y columnas para el pixel actual
-        X = Factor.rasterUnitsPerPixelX()
-        Y = Factor.rasterUnitsPerPixelY()
-        # Se calcula el numero numero de filas y columas esperadas
-        width = (X/cellsize)*width_layer
-        height = (Y/cellsize)*height_layer
-        renderer = Factor.renderer()
-        provider = Factor.dataProvider()
-        # Se determina el CRS de la capa
-        crs = Factor.crs().toWkt()
-        pipe.set(provider.clone())
-        pipe.set(renderer.clone())
-        # Se crea el nuevo archivo raster correspondiente
-        file_writer = QgsRasterFileWriter(data_path + f'/Pre_Proceso/{Factor_Condicionante}.tif')
-        file_writer.writeRaster(pipe, width, height, extent, Factor.crs())
-        
-        # Se añade la capa raster al lienzo
-        iface.addRasterLayer(data_path + f'/Pre_Proceso/{Factor_Condicionante}.tif', f"{Factor_Condicionante}")
-
-# Se listan los factores condicionantes los cuales deben coincidir con los de rasterize más los continuos 
-Factor_Condicionante = ['Pendiente', 'CurvaturaPlano']
-
-# Se recorre la lista de factores condicionantes
-for factor in (Factor_Condicionante):
-    # Se aplica la función del peso al factor condicionante
-    cambiopixel(factor)
-
 # ##################################### Factores Condicionantes ##################################### #
 
 # Se define la función rasterize para la rasterización de los factores condicionantes con base en el campo representativo
@@ -239,11 +206,11 @@ def rasterize(Factor_Condicionante):
         fields = uniqueprovider.fields()
         id = fields.indexFromName(Codigo_Factor)
         atributos = uniqueprovider.uniqueValues(id)
-        df = pd.DataFrame(atributos)
+        df = pd.DataFrame(atributos, dtype = 'str')
         print(atributos)
         
         # Se crea un datframe
-        DF_Raster = pd.DataFrame(columns=['Caract', 'ID'], dtype=float)
+        DF_Raster = pd.DataFrame(columns=['Caract', 'ID'], dtype = float)
         
         # Se inicia a editar
         caps = Factor.dataProvider().capabilities()
@@ -332,7 +299,7 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
     QgsVectorFileWriter.writeAsVectorFormat(
         Mov_Masa_Corr, Caida_poligonos, "utf-8", 
         QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
-
+        
     #Se generan puntos en los centroides de los movimientos en masa
     alg = "native:centroids"
     Mov_Masa_poligonos = data_path + '/Pre_Proceso/Mov_Masa_poligonos.shp'
@@ -377,7 +344,7 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
         Caida_puntos = data_path+'/Pre_Proceso/Caida_puntos.shp'
         QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Caida_puntos, "utf-8", 
             QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
-            
+
         # Se lee como archivo vectorial los deslizamientos como puntos
         Deslizamientos_puntos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos_puntos.shp')
         Desliz_Poligonos = data_path + '/Pre_Proceso/Desliz_Poligonos.shp'
@@ -400,18 +367,16 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
         
         # Se unen el mapa de puntos y los puntos generados a partir de los poligonos de deslizamientos
         alg = "native:mergevectorlayers"
-        CRS = QgsCoordinateReferenceSystem('EPSG:3116')
         Deslizamientos = data_path + '/Pre_Proceso/Deslizamientos.shp'
-        params = {'LAYERS': [Deslizamientos_poligonos, Deslizamientos_puntos], 'CRS': CRS, 'OUTPUT': Deslizamientos}
+        params = {'LAYERS': [Deslizamientos_poligonos, Deslizamientos_puntos], 'CRS':None, 'OUTPUT': Deslizamientos}
         processing.run(alg, params) 
-        
+
         # Se unen el mapa de puntos y los puntos generados a partir de los poligonos de los movimientos
         alg = "native:mergevectorlayers"
-        CRS = QgsCoordinateReferenceSystem('EPSG:3116')
         Mov_Masa = data_path + '/Pre_Proceso/Mov_Masa.shp'
-        params = {'LAYERS': [Mov_Masa_poligonos, Mov_Masa_Puntos], 'CRS': CRS, 'OUTPUT': Mov_Masa}
+        params = {'LAYERS': [Mov_Masa_poligonos, Mov_Masa_Puntos], 'CRS':None, 'OUTPUT': Mov_Masa}
         processing.run(alg, params)
-    
+
     else:
         
         # Si no hay un mapa de puntos entonces el mapa de poligonos se guarda como deslizamientos
@@ -425,7 +390,8 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
         Mov_Masa = data_path + '/Pre_Proceso/Mov_Masa.shp'
         CRS = Desliz_Poligonos.crs().authid()
         QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_poligonos, Mov_Masa, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile")
-
+        
+        
 elif os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
     
     # Si no hay mapa de poligonos se guarda la selección de deslizamientos
@@ -445,7 +411,7 @@ elif os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
     Mov_Masa = data_path + '/Pre_Proceso/Mov_Masa.shp'
     CRS = Mov_Masa_Puntos.crs().authid()
     QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Mov_Masa, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile")
-
+    
 else:
     # Si no hay mapas de ningún tipo se genera un aviso porque es necesario
     iface.messageBar().pushMessage("Movimientos en masa", 'No hay archivo de movimientos en masa', Qgis.Warning, 10)

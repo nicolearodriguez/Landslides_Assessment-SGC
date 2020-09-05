@@ -1,30 +1,33 @@
-# -*- coding: utf-8 -*-
 """
-Editor de Spyder
-
-Este es un archivo temporal.
+@author: Nicole Alejadra Rodríguez Vargas
+nicole.rodriguez@correo.uis.edu.co
 """
 
 """
-PROCEDIMIENTO GENERAL
-1. Ingresar registro de datos con precipitación (P) diaria de la estación objeto ('Precipitacion_diaria.csv' )
-2. Ingresar el catálogo de movimientos en masa ('Inventario_MM.csv')
-3. Sumar la precipitación de los dias antecedentes (Pant) que se deseen analizar para cada evento, sin incluir la P del dáa en análisis
-4. Almacenar como par de datos la precipitacion del dia (P24) y la Pant asociada para cada evento
-5. Graficar el conjunto de datos Pant,P24 de todos los eventos
-6. Hacer una regresion lineal, PT=b-m*Pant  (PT=umbral de lluvia)
-7. Acumular el Pant para cada día del registro de precipitación de la estación objeto
-8. Calcular el PT para todo el registro de precipitación de la estación objeto usando el Pant del paso 7
-9. Contar cuantas veces P>PT durante la ventana de observación en que ocurrieron los eventos
-
+En está programación se calcula la probabilidad de amenaza para movimientos en masa detonados por lluvia,
+para lo que primero se hace una correlación de los movimientos en masa con su respectiva lluvia diaria y 
+lluvia antecedente, de ser necesario se hace un ajuste de los resultados con base en una precipitación
+mínima considerada, una vez obtenidos los puntos se espacializan para determinar la ecuación de 
+precipitación umbral y así poder determinar los días en que se excedió esta preciptacón umbral y si 
+existe relación entre estos días de excedencia y las fechas de  movimientos en masa. 
+A partir de estos parametros se aplica la probabilidad de poisson y se calcula la probabilidad para 
+posteriormente espacializarla en el polígono correspondiente.
 """
 
+from PyQt5.QtWidgets import QInputDialog
+from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtCore import QVariant
+from qgis.gui import QgsMessageBar
+from qgis.core import QgsProject
 import matplotlib.pyplot as plt
-from numpy import linalg
+from os import listdir
 from time import time
 import pandas as pd
 import numpy as np
+import processing
+import datetime
 import math
+import os
 
 #Se determina el momento en que inicia la ejcución del programa
 start_time = time()
@@ -36,7 +39,7 @@ if ok == False:
 data_path = data_path.replace("\\", "/")
 
 # Se listan los archivos en la ruta general
-list = listdir(data_path)
+list = os.listdir(data_path)
 
 # Se determinan los archivos con extensión .csv
 csv = []
@@ -51,9 +54,19 @@ if ok == False:
     raise Exception('Cancelar')
 Ruta_Precipitacion = data_path + '/' + Precipitacion
 
+# Ingresar registro de precipitación diaria para la estación en análisis
+DF_Precipitacion_diaria = pd.read_csv(Ruta_Precipitacion)
+# Se determinan cuales son los campos del dataframe
+Campos = DF_Precipitacion_diaria.columns.tolist()
+
+# Se determina el campo dónde está la fecha
+Fecha_Precip, ok = QInputDialog.getItem(None, "Fecha de precipitación",
+                                          "Seleccione el campo dónde está la FECHA relacionada a la precipitación diaria", Campos, 0, False)
+
+
 # Se define el número de días de lluvia antecedente que desea acumular
 d_ant, ok = QInputDialog.getInt(None, 'Número de días antecedentes',
-                            'Introduce el número de días para la lluvia antecedentes: ')
+                            'Introduzca el número de días para la lluvia antecedentes: ')
 if ok == False:
     raise Exception('Cancelar')
 
@@ -72,8 +85,8 @@ if Ajuste == "Si":
         raise Exception('Cancelar')
 
     # Se defina la precipitación umbral para el ajuste de las fechas de los movimientos
-    umbral_lluvia, ok= QInputDialog.getInt(None, 'Umbral de lluvia',
-                                        'Introduzca la lluvia umbral con la que se hará el ajuste: ')
+    umbral_lluvia, ok= QInputDialog.getInt(None, 'Lluvia mínima',
+                                        'Introduzca la lluvia mínima con la que se hará el ajuste: ')
     if ok == False:
         raise Exception('Cancelar')
 
@@ -87,16 +100,15 @@ if ok == False:
 # Se define cómo se quiere hacer la discritización
 Discri = ["Amenaza", "Amenaza - Tipo de movimiento"]
 Discritizacion, ok = QInputDialog.getItem(None, "Discretización",
-                                          "Seleccione la cómo desea hacer la discretización de los MM", Discri, 0, False)
+                                          "Seleccione cómo desea hacer la discretización de los MM", Discri, 0, False)
 if ok == False:
     raise Exception('Cancelar')
 
-# Ingresar registro de precipitación diaria para la estación en análisis
-DF_Precipitacion_diaria = pd.read_csv(Ruta_Precipitacion)
-DF_Precipitacion_diaria['date'] = pd.to_datetime(DF_Precipitacion_diaria.date)
+# Se determinan las fechas en la que se tiene información de precipitación
+DF_Precipitacion_diaria[Fecha_Precip] = pd.to_datetime(DF_Precipitacion_diaria[Fecha_Precip])
 # Se determinan la fecha inicial y final con la que se cuenta precipitación
-begin = min(DF_Precipitacion_diaria['date'])
-end = max(DF_Precipitacion_diaria['date'])
+begin = min(DF_Precipitacion_diaria[Fecha_Precip])
+end = max(DF_Precipitacion_diaria[Fecha_Precip])
 
 # Se lee el inventario de movimientos en masa con fecha y susceptibilidad detonados por lluvias
 DF_Inv = pd.read_csv(data_path + '/Amenaza/DF_Mov_Masa_Lluvias.csv')
@@ -104,15 +116,15 @@ DF_Inv = pd.read_csv(data_path + '/Amenaza/DF_Mov_Masa_Lluvias.csv')
 DF_Inv['FECHA_MOV'] = pd.to_datetime(DF_Inv.FECHA_MOV)
 DF_Inv = DF_Inv.drop(['level_0'], axis=1) #Borrar
 # Se ordenan los MM según la fecha
-DF_Inv = DF_Inv.sort_values(by ='FECHA_MOV')
-DF_Inv.reset_index(level=0, inplace=True)
-DF_Inv = DF_Inv.drop(['index'], axis=1)
+DF_Inv = DF_Inv.sort_values(by = 'FECHA_MOV')
+DF_Inv.reset_index(level=0, inplace = True)
+DF_Inv = DF_Inv.drop(['index'], axis = 1)
 
-# Se truncan las fechas de MM según las fechas de precipitación 
-DF_Inv.set_index('FECHA_MOV',inplace=True)
+# Se truncan las fechas de MM según las fechas de precipitación con las que se cuente
+DF_Inv.set_index('FECHA_MOV', inplace = True)
 DF_Inv = DF_Inv.truncate(before = begin, after = end)
-DF_Inv.reset_index(level=0, inplace=True)
-DF_Inv = DF_Inv.drop(['level_0'], axis=1)
+DF_Inv.reset_index(level = 0, inplace = True)
+DF_Inv = DF_Inv.drop(['level_0'], axis = 1)
 
 # Se lee los poligonos correspondientes a las estaciones
 DF_Poligonos = pd.read_csv(data_path + '/Pre_Proceso/DF_Raster_Poligonos_Voronoi.csv')
@@ -120,13 +132,15 @@ DF_Poligonos['Codigo'] = DF_Poligonos['Codigo'].astype(int)
 DF_Poligonos['Codigo'] = DF_Poligonos['Codigo'].astype(str)
 DF_Poligonos.set_index('ID', inplace = True)
 
-#Se crea el dataframe con el que se hace el análisis
+# Se crea el dataframe con el que se hace el análisis
 DF_Excedencia = pd.DataFrame(columns=['Poli_Thiessen', 'Estacion',
                                       'Amenaza', 'Tipo_Mov', 'Excedencia',
                                       'P[R>Rt]', 'N', 'Fr', 'Ptem'])
+
+# Se crea un datframe de apoyo para ir añadiendo los resultados por poligonos
 DF_Final = pd.DataFrame()
 
-#Se extraen los valores únicos de poligonos correspondientes a las estaciones
+# Se extraen los valores únicos de poligonos correspondientes a las estaciones
 Poligonos = DF_Inv['Poli_Voron'].unique()
 
 # Se recorre los valores de poligonos
@@ -143,21 +157,21 @@ for poligono in Poligonos:
     DF_Inv_Poligono.reset_index(level=0, inplace=True)
     DF_Inv.reset_index(level=0, inplace=True)
     
-    #Se define la estación correspondiente al poligono
+    # Se define la estación correspondiente al poligono
     Estacion = DF_Poligonos.loc[poligono]['Codigo']
     print(poligono, Estacion)
     # Se extrae solo las precipitaciones de la estación de interes
-    DF_Estacion = DF_Precipitacion_diaria[['date', Estacion]] 
+    DF_Estacion = DF_Precipitacion_diaria[[Fecha_Precip, Estacion]] 
     # Se cálcula la precipitación antecedente según los días antecedentes
     Pant = DF_Estacion[Estacion].rolling(min_periods = d_ant+1, window = d_ant+1).sum()-DF_Estacion[Estacion]
     DF_Estacion['Pant'] = Pant
     # Se pasa a formato de fecha el campo de la fecha
-    DF_Estacion['date'] = pd.to_datetime(DF_Estacion.date)
-    DF_Estacion['date'] = DF_Estacion['date'].dt.strftime('%d/%m/%Y')
-    DF_Estacion['date'] = DF_Estacion['date'].astype(str)
+    DF_Estacion[Fecha_Precip] = pd.to_datetime(DF_Estacion[Fecha_Precip])
+    DF_Estacion[Fecha_Precip] = DF_Estacion[Fecha_Precip].dt.strftime('%d/%m/%Y')
+    DF_Estacion[Fecha_Precip] = DF_Estacion[Fecha_Precip].astype(str)
     DF_Estacion['P24'] = DF_Estacion[Estacion]
 
-    #Se extraen los tipos de movimientos en masa
+    #Se extraen los tipos de movimientos en masa que hay en el poligono
     Tipo_Evento = DF_Inv_Poligono['TIPO_MOV1'].unique()
     Tipo_Evento = pd.DataFrame(Tipo_Evento,columns=['Tipo_Mov'],dtype=object)
     
@@ -216,13 +230,13 @@ for poligono in Poligonos:
         
         #Se hace el estudio según la categoría de amenaza
         for id_amenaza in range (0,len(Categorias_Amenaza)): 
-            #Amenaza = 1
+            # Se determina el id de la amenaza
             Amenaza = Categorias_Amenaza.loc[id_amenaza,'Amenaza']
             
             # Según el id de la amenaza se puede determinar la categoria
-            if Amenaza ==2:
+            if Amenaza == 2:
                 Cat_amenaza = 'Alta'
-            elif Amenaza ==1:
+            elif Amenaza == 1:
                 Cat_amenaza = 'Media'
             else:
                 Cat_amenaza = 'Baja'
@@ -270,13 +284,13 @@ for poligono in Poligonos:
             for h in range (0, len(DF_Fechas_Unicas_MM)):
                 # Se busca y se determina el índice de la fecha en el dataframe de precipitación
                 Dia = DF_Fechas_Unicas_MM.loc[h, 'Fecha']
-                indice = DF_Estacion[DF_Estacion['date'] == Dia].index
+                indice = DF_Estacion[DF_Estacion[Fecha_Precip] == Dia].index
                 P24 = DF_Estacion.loc[indice[0], Estacion]
                 
                 if Ajuste == "No":
                     # Si no se decide hacer un ajuste se llena con la precipitación del día y la antecedente correspondiente
                     DF_DatosLluviaEventos.loc[h, 'P24'] = P24
-                    DF_DatosLluviaEventos.loc[h, 'Fecha_Analisis'] = DF_Estacion.loc[indice[0], 'date']
+                    DF_DatosLluviaEventos.loc[h, 'Fecha_Analisis'] = DF_Estacion.loc[indice[0], Fecha_Precip]
                     DF_DatosLluviaEventos.loc[h, 'Pant'] = DF_Estacion.loc[indice[0], 'Pant']
                     
                 else:
@@ -289,8 +303,8 @@ for poligono in Poligonos:
                                 # Los datos de la P24 del día más cercano que cumpla el umbral serán con los que se llenará el dataframe para el análisis
                                 DF_DatosLluviaEventos.loc[h, 'P24'] = DF_Estacion.loc[indice[0] - z, Estacion]
                                 DF_DatosLluviaEventos.loc[h, 'Pant'] = DF_Estacion.loc[indice[0] - z, 'Pant']
-                                Fecha_Inicial = DF_Estacion.loc[indice[0], 'date']
-                                Fecha_Analisis = DF_Estacion.loc[indice[0] - z, 'date']
+                                Fecha_Inicial = DF_Estacion.loc[indice[0], Fecha_Precip]
+                                Fecha_Analisis = DF_Estacion.loc[indice[0] - z, Fecha_Precip]
                                 DF_DatosLluviaEventos.loc[h, 'Fecha_Analisis'] = Fecha_Analisis
                                 DF_DatosLluviaEventos.loc[h, 'Fecha_Inventario'] = Fecha_Inicial
                                 #Se reemplaza la fecha en el inentario de movimientos para el posterior análisis
@@ -300,8 +314,12 @@ for poligono in Poligonos:
                     else:
                         # Si la P24 cumple el umbral se toman sus datos
                         DF_DatosLluviaEventos.loc[h, 'P24'] = P24
-                        DF_DatosLluviaEventos.loc[h, 'Fecha_Analisis'] = DF_Estacion.loc[indice[0], 'date']
+                        DF_DatosLluviaEventos.loc[h, 'Fecha_Analisis'] = DF_Estacion.loc[indice[0], Fecha_Precip]
                         DF_DatosLluviaEventos.loc[h, 'Pant'] = DF_Estacion.loc[indice[0], 'Pant']
+            
+            # Se eliminan datos que posiblemente no tuvieran información
+            DF_DatosLluviaEventos = DF_DatosLluviaEventos.dropna(subset=['Pant'])
+            DF_DatosLluviaEventos = DF_DatosLluviaEventos.dropna(subset=['P24'])
             
             # Se exporta el dataframe con los valores de precipitación para el análisis de las categorías en cuestión
             DF_DatosLluviaEventos.reset_index().to_csv(data_path + f'/Amenaza/Lluvia_{poligono}_{Cat_amenaza}_{Tipo}.csv',header=True,index=False)
@@ -350,10 +368,10 @@ for poligono in Poligonos:
             #Se resuleve el modelo líneal por medio de vectores y matrices
             numdat = len(y)
 
-            G = np.ones((numdat, 2)) #Numdata? 2?
+            G = np.ones((numdat, 2))
             G[:,0] = x
             #print('G=\n', G)
-            ml2 = linalg.inv(G.T@G)@G.T@y
+            ml2 = np.linalg.inv(G.T@G)@G.T@y
             
             dmod = G@ml2
             rl2 = y - dmod
@@ -361,7 +379,7 @@ for poligono in Poligonos:
             gml0 = dmod
             while error>0.1:
                 R = np.diag(1/np.abs(rl2))
-                ml1 = linalg.inv(G.T@R@G)@G.T@R@y
+                ml1 = np.linalg.inv(G.T@R@G)@G.T@R@y
                 dl1 = G@ml1
                 error = np.abs((dl1[0]-gml0[0])/(1+dl1[0]))
                 gml0 = dl1
@@ -402,7 +420,7 @@ for poligono in Poligonos:
             
             #Se sobreescriben los datos de la gráfica en otro dataframe
             DF_Estacion_Analisis = pd.DataFrame()
-            DF_Estacion_Analisis['date'] = DF_Estacion['date']
+            DF_Estacion_Analisis['date'] = DF_Estacion[Fecha_Precip]
             DF_Estacion_Analisis['P24'] = DF_Estacion['P24']
             DF_Estacion_Analisis['Pant'] = DF_Estacion['Pant']
             
@@ -672,6 +690,7 @@ else:
                 # Se hace el cambio de los atributos
                 Amenaza_Lluvia.dataProvider().changeAttributeValues({fid: attrs})
 
+# Se añade la capa al lienzo
 Amenaza_Lluvia = QgsVectorLayer(data_path + '/Amenaza/Amenaza_Lluvia.shp', 'Amenaza_Lluvia')
 QgsProject.instance().addMapLayer(Amenaza_Lluvia)
 

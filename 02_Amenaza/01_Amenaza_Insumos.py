@@ -1,3 +1,15 @@
+"""
+@author: Nicole Alejadra Rodríguez Vargas
+nicole.rodriguez@correo.uis.edu.co
+"""
+
+"""
+En esta programación se desarrollan los insumos para las posteriores programaciones del análisis de amenaza,
+se identifica el detonante de cada uno de los movimientos en masa analizados y además se muestren los valores
+necesarios para su discretización como lo son los valores de susceptibilidad anteriormente calculados o ID
+de los polígonos dónde se encuentran ubicados
+"""
+
 from PyQt5.QtWidgets import QInputDialog
 from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import QVariant
@@ -22,7 +34,7 @@ data_path = data_path.replace("\\", "/")
 
 #Se imprime una recomendación
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
-                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
+                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes en especial los .shp')
 
 # Se listan los archivos en la ruta general
 list = listdir(data_path)
@@ -33,6 +45,11 @@ for i in list:
     if i[-4:] == '.shp':
         shape.append(i)
 shape.append('None')
+
+# Sistema de referencia de coordenadas
+SRC_Destino, ok = QInputDialog.getText(None, 'SRC', 'Introduzca el ID del sistema de referencia de coordenadas PLANAS para la reproyección de las capas necesarias, Ejm= EPSG:3116')
+if ok == False:
+    raise Exception('Cancelar')
 
 # ############################# INPUTS DE PRECIPITACIÓN ############################# #
 
@@ -56,7 +73,7 @@ Codigo_Estacion, ok = QInputDialog.getItem(None, "Códigos de las estaciones",
 if ok == False:
     raise Exception('Cancelar')
 
-# ############################# INPUTS DE SIMOS ############################# #
+# ############################# INPUTS DE SISMOS ############################# #
 
 # Ubicación de los sismos
 Sismos, ok = QInputDialog.getItem(None, "Sismos",
@@ -94,7 +111,7 @@ if ok == False:
 
 # Mensaje informativo
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta! : Cambio de unidades en los simos",
-                        'Tenga en cuenta que autores como Scordilis y Grunthal no hacen la conversión para todas las unidades, se recomienda revisar la documentación')
+                        'Tenga en cuenta que Scordilis no hacen la conversión para todas las unidades, se recomienda revisar la documentación')
 
 # Se define con base en qué autor se quiere hacer la conversión de unidades
 Autores = ["Scordilis", "Grunthal", "Akkar", "Ulusay", "Kadirioglu", "Promedio"]
@@ -140,7 +157,7 @@ Susceptibilidad_Deslizamientos = QgsRasterLayer(data_path + '/Resultados/Suscept
 
 # Se reproyecta la capa a coordenadas planas
 alg = "native:reprojectlayer"
-CRS = QgsCoordinateReferenceSystem('EPSG:3116')
+CRS = QgsCoordinateReferenceSystem(SRC_Destino)
 Reproyectada = data_path + '/Pre_Proceso/Mov_Masa_Reproyectada.shp'
 params = {'INPUT': Mov_Masa, 'TARGET_CRS': CRS, 'OUTPUT': Reproyectada}
 processing.run(alg, params)
@@ -212,11 +229,22 @@ Centroides = data_path + '/Pre_Proceso/Centroides_Cluster.shp'
 params = {'INPUT': Mov_Masa,'WEIGHT':'CLUSTER_ID','UID':'CLUSTER_ID','OUTPUT': Centroides}
 processing.run(alg, params)
 
-#Se crean los poligonos de análisis de sismos con base en los centroides
-alg = "qgis:voronoipolygons"
-Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Sismo.shp'
-params = {'INPUT': Centroides,'BUFFER':50,'OUTPUT': Poligonos}
-processing.run(alg, params)
+# Si se tiene suficientes estaciones se crean los poligonos de Voronoi
+if grupo > 2:
+    #Se crean los poligonos de análisis de sismos con base en los centroides
+    alg = "qgis:voronoipolygons"
+    Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Sismo.shp'
+    params = {'INPUT': Centroides,'BUFFER':50,'OUTPUT': Poligonos}
+    processing.run(alg, params)
+
+else:
+    # Si solo se cuenta con una o dos estaciones se crea un buffer del punto
+    alg = "native:buffer"
+    Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Sismo.shp'
+    params = {'INPUT': Centroides, 'DISTANCE':10000, 'SEGMENTS':5,
+              'END_CAP_STYLE':0, 'JOIN_STYLE':0, 'MITER_LIMIT':2,
+              'DISSOLVE':False, 'OUTPUT':Poligonos}
+    processing.run(alg, params)
 
 #Se cortan los poligonos de sismos según la extensión de análisis
 alg = "gdal:clipvectorbyextent"
@@ -232,11 +260,30 @@ processing.run(alg, params)
 
 ############################## MUESTREO DE SUSCEPTIBILIDAD ##############################
 
-# Se crean los poligonos de Voronoi dónde se espacializará la amenaza por lluvia
-alg = "qgis:voronoipolygons"
-Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Lluvia.shp'
-params = {'INPUT': Estaciones, 'BUFFER':50, 'OUTPUT': Poligonos}
-processing.run(alg, params)
+# Se determina cuántas estaciones hay
+flat_list = []
+for item in Estaciones.getFeatures():  # Se recorren las filas de la capa
+    fid = item.id()  # Se obtiene el id de la fila en cuestión
+    flat_list.append(fid)
+Num_Estaciones = len(flat_list)
+
+# Si se tiene suficientes estaciones se crean los poligonos de Voronoi
+if Num_Estaciones > 2:
+    # Se crean los poligonos de Voronoi dónde se espacializará la amenaza por lluvia
+    alg = "qgis:voronoipolygons"
+    Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Lluvia.shp'
+    params = {'INPUT': Estaciones, 'BUFFER':50, 'OUTPUT': Poligonos}
+    processing.run(alg, params)
+
+else:
+    # Si solo se cuenta con una o dos estaciones se crea un buffer del punto
+    alg = "native:buffer"
+    Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Lluvia.shp'
+    params = {'INPUT': Estaciones, 'DISTANCE':10000, 'SEGMENTS':5,
+              'END_CAP_STYLE':0, 'JOIN_STYLE':0, 'MITER_LIMIT':2,
+              'DISSOLVE':False, 'OUTPUT':Poligonos}
+    processing.run(alg, params)
+
 
 # Se cortan los poligonos según la extensión de análisis
 alg = "gdal:clipvectorbyextent"
@@ -336,7 +383,7 @@ processing.run(alg, params)
 Mov_Masa_Amenaza_Desliz = QgsVectorLayer(data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Desliz.shp')
 Archivo_csv = data_path + '/Amenaza/Mov_Masa_Amenaza.csv'
 QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Amenaza_Desliz,
-                                        Archivo_csv, "utf-8", Mov_Masa_Amenaza_Desliz.crs(), driverName = "CSV")
+                                       Archivo_csv, "utf-8", Mov_Masa_Amenaza_Desliz.crs(), driverName = "CSV")
 
 # Susceptibilidad por caídas
 Ruta_Caidas = data_path + '/Resultados/Susceptibilidad_Caida.tif'
@@ -388,7 +435,7 @@ if os.path.isfile(Ruta_Flujos) is True:
 
 # Se reproyecta la capa a coordenadas planas
 alg = "native:reprojectlayer"
-CRS = QgsCoordinateReferenceSystem('EPSG:3116')
+CRS = QgsCoordinateReferenceSystem(SRC_Destino)
 Reproyectada = data_path + '/Pre_Proceso/Sismos_Reproyectada.shp'
 params = {'INPUT': Sismos, 'TARGET_CRS': CRS, 'OUTPUT': Reproyectada}
 processing.run(alg, params)
@@ -476,6 +523,8 @@ Sismos.loc[Sismos["Unidad"].str.startswith('md'),
            'Ulusay'] = 0.9495 * Sismos.Magnitud + 0.4181
 Sismos.loc[Sismos["Unidad"].str.startswith('md') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 7.4),
            'Kadirioglu'] = 0.7947 * Sismos.Magnitud + 1.342
+Sismos.loc[Sismos["Unidad"].str.startswith('md'),
+           'Grunthal'] = 1.472 * Sismos.Magnitud - 1.49
 
 #Ms
 Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 3) & (Sismos.Magnitud <= 6.1),
@@ -543,17 +592,19 @@ Fechas = set(DF_Fechas_Mov).intersection(set(DF_Fechas_Sismo))
 Fechas = pd.DataFrame(Fechas, columns = ['date'])
 
 # Se crea un dataframe para el llenado de los movimientos detonados por sismos
-DF_Mov_Sismos = pd.DataFrame()
+DF_Mov_Sismos = pd.DataFrame(columns=['Indice'])
+
 # Se recorren las fechas coincidentes de MM y sismo
 for j in range (0, len(Fechas)):
-    #Se determina la fecha
+    # Se determina la fecha
     Fecha = Fechas.loc[j, 'date']
-    #Se determinan los índices de los sismos con la fecha en cuestión
+    # Se determinan los índices de los sismos con la fecha en cuestión
     Indices = DF_Sismos[DF_Sismos[Fecha_Sismo] == Fecha].index
+    # Se crea un campo de apoyo para calcular las distancias respectivas
     DF_Fechas_MM['Distancia'] = None
-    #Se recorren los índices de los sismos ocurridos en la fecha
+    # Se recorren los índices de los sismos ocurridos en la fecha
     for i in range (0,len(Indices)):
-        #Se extraen las coordenadas del sismos correspondientes al índice
+        # Se extraen las coordenadas del sismos correspondientes al índice
         X_Sismo = DF_Sismos.loc[Indices[i], 'X']
         Y_Sismo = DF_Sismos.loc[Indices[i], 'Y']
         # Se cálcula la distancia entre el sismos y los MM ocurridos en la fecha
@@ -578,28 +629,49 @@ DF_Mov_Masa.loc[Indices_Mov, 'Detonante'] = "Sismo"
 # Los MM restantes se asocian al detonante lluvia
 DF_Mov_Masa.loc[DF_Mov_Masa.Detonante != "Sismo", 'Detonante'] = "Lluvia"
 
-# Se determina el campo detonante cómo indice
-DF_Mov_Masa.set_index('Detonante', inplace=True)
+DF_Mov_Masa.rename(columns = {Fecha_MM : 'FECHA_MOV'}, inplace = True)
+
 # Se parte el dataframe con base en el detonante
-DF_Mov_Masa_Sismos = DF_Mov_Masa.loc['Sismo']
-DF_Mov_Masa_Lluvias = DF_Mov_Masa.loc['Lluvia']
+DF_Mov_Masa_Sismos = DF_Mov_Masa.loc[DF_Mov_Masa['Detonante'] == 'Sismo']
+DF_Mov_Masa_Lluvias = DF_Mov_Masa.loc[DF_Mov_Masa['Detonante'] == 'Lluvia']
 
 # Se exporta como csv los MM
-DF_Mov_Masa.reset_index(level=0, inplace=True)
 DF_Mov_Masa.reset_index().to_csv(data_path + '/Amenaza/Mov_Masa_Amenaza.csv',
                        header = True, index = False)
 
 # Se exporta como csv los MM detonados por sismo
-DF_Mov_Masa_Sismos.reset_index(level=0, inplace=True)
+print('Movimientos en masa detonados por sismos: ')
 print(DF_Mov_Masa_Sismos)
 DF_Mov_Masa_Sismos.reset_index().to_csv(data_path + '/Amenaza/DF_Mov_Masa_Sismos.csv',
                               header = True, index = False)
 
+# Se espacializan los movimientos en masa detonados por sismos
+alg = "qgis:createpointslayerfromtable"
+Tabla = data_path + '/Amenaza/DF_Mov_Masa_Sismos.csv'
+Shape = data_path + '/Amenaza/Mov_Masa_Sismos.shp'
+params = {'INPUT': Tabla,'XFIELD':'X','YFIELD':'Y','ZFIELD':None,'MFIELD':None,'TARGET_CRS':QgsCoordinateReferenceSystem(SRC_Destino),'OUTPUT': Shape}
+processing.run(alg, params)
+
+# Se añade la capa al lienzo
+Mov_Masa_Sismos = QgsVectorLayer(data_path + '/Amenaza/Mov_Masa_Sismos.shp', 'Mov_Masa_Sismos')
+QgsProject.instance().addMapLayer(Mov_Masa_Sismos)
+
 # Se exporta como csv los MM detonados por lluvia
-DF_Mov_Masa_Lluvias.reset_index(level=0, inplace=True)
+print('Movimientos en masa detonados por lluvia: ')
 print(DF_Mov_Masa_Lluvias)
 DF_Mov_Masa_Lluvias.reset_index().to_csv(data_path + '/Amenaza/DF_Mov_Masa_Lluvias.csv',
                                header = True, index = False)
+
+# Se espacializan los movimientos en masa detonados por lluvia
+alg = "qgis:createpointslayerfromtable"
+Tabla = data_path + '/Amenaza/DF_Mov_Masa_Lluvias.csv'
+Shape = data_path + '/Amenaza/Mov_Masa_Lluvias.shp'
+params = {'INPUT': Tabla,'XFIELD':'X','YFIELD':'Y','ZFIELD':None,'MFIELD':None,'TARGET_CRS':QgsCoordinateReferenceSystem(SRC_Destino),'OUTPUT': Shape}
+processing.run(alg, params)
+
+# Se añade la capa al lienzo
+Mov_Masa_Lluvias = QgsVectorLayer(data_path + '/Amenaza/Mov_Masa_Lluvias.shp', 'Mov_Masa_Lluvias')
+QgsProject.instance().addMapLayer(Mov_Masa_Lluvias)
 
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
 elapsed_time = time() - start_time

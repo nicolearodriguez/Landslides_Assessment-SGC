@@ -1,3 +1,15 @@
+"""
+@author: Nicole Alejadra Rodríguez Vargas
+nicole.rodriguez@correo.uis.edu.co
+"""
+
+"""
+En esta programación se caracteriza la susceptibilidad por movimientos en masa tipo caída,
+esta caracterización se hace con base en la pendiente, las UGS y las subunidades indicativas
+del proceso tipo caída, además, se tienen en cuenta los eventos ocurridos anteriormente cómo
+depositos para así completar la caracterización de la susceptibilidad.
+"""
+
 from PyQt5.QtWidgets import QInputDialog
 from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import QVariant
@@ -22,6 +34,13 @@ data_path = data_path.replace("\\", "/")
 # Se listan los archivos en la ruta general
 list = listdir(data_path)
 
+# Se determinan los archivos con extensión .tif en la ruta
+raster = []
+for i in list:
+    if i[-4:] == '.tif':
+        raster.append(i)
+raster.append('None')
+
 # Se determinan los archivos con extensión .shp en la ruta
 shape = []
 for i in list:
@@ -42,7 +61,7 @@ for i in list:
     if i[-4:] == '.csv':
         csv.append(i)
 
-# Zonas de depósito
+# Geoformas indicativas 
 GeoformasIndicativas, ok = QInputDialog.getItem(None, "Geoformas indicativas de procesos tipo caída",
                                            "Seleccione el archivo de las geoformas indicativas de procesos tipo caída", csv, 0, False)
 if ok == False:
@@ -50,11 +69,18 @@ if ok == False:
 
 # #######################Zonificación de Susceptibilidad por zonas de inicio tipo Caida####################### #
 
+# Se determina la ruta de la pendiente
+Pendiente, ok = QInputDialog.getItem(None, f"Pendiente",
+                                   f"Seleccione el archivo de pendiente",
+                                   raster, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
+
 #Se reclasifica teniendo en cuenta que 0 serán las pendientes menores a 45, y serán 1 las pendientes mayores a 45.
 alg="native:reclassifybytable"
-Pendientes = data_path + '/Pre_Proceso/Pendiente.tif'
+Pendientes = data_path + '/' + Pendiente
 Susceptibilidad_Pendiente = data_path+'/Pre_Proceso/Pendientes_Suscep.tif'
-table = [0, 45, 0, 45, 100, 5]  # [min1, max1, valor1, min2, max2, valor2]  min<valor<=max
+table = [0, 45, 0, 45, 1000, 5]  # [min1, max1, valor1, min2, max2, valor2]  min<valor<=max
 params = {'INPUT_RASTER': Pendientes,'RASTER_BAND': 1,'TABLE': table,'NO_DATA': -9999,'RANGE_BOUNDARIES': 0,
           'NODATA_FOR_MISSING': True,'DATA_TYPE': 5,'OUTPUT': Susceptibilidad_Pendiente}
 processing.run(alg, params)
@@ -64,12 +90,14 @@ processing.run(alg, params)
 # Geoformas indicativas de proceso tipo caida
 FILE_NAME = data_path + '/' + GeoformasIndicativas
 DF_GeoformasIndicativas = pd.read_csv(FILE_NAME, delimiter = ";", encoding = 'latin-1')
+# Se extraen solo los tres primeros caracteres del acronimo teniendo en cuenta que las coincidencias no son exactas
 DF_GeoformasIndicativas['CODIGO'] = DF_GeoformasIndicativas['ACRONIMO'].astype(str).str[0:3]
 
 # Geoformas existentes en la capa
 FILE_NAME = data_path + '/Pre_Proceso/DF_Raster_SubunidadesGeomorf.csv'
 DF_SubunidadesGeoform = pd.read_csv(FILE_NAME, delimiter = ",", encoding = 'latin-1')
 DF_SubunidadesGeoform.drop(['index'], axis = 'columns', inplace = True)
+# Se extraen solo los tres primeros caracteres del acronimo teniendo en cuenta que las coincidencias no son exactas
 DF_SubunidadesGeoform['Caract_3'] = DF_SubunidadesGeoform['Caract'].astype(str).str[0:3]
 
 for i in range(0, len(DF_SubunidadesGeoform)): 
@@ -94,11 +122,16 @@ for i in range(0, len(DF_SubunidadesGeoform)):
         DF_SubunidadesGeoform.loc[i, 'Valor'] = Valor
     
     else:
-        
-        # Si la longitud es diferente de 0 se pondrá como indice la columna del acronimo
-        DF_GeoformasIndicativas.set_index('CODIGO', inplace=True)
-        # Se reemplazará el valor de susceptibilidad correspondiente que se encuentra en la lista de subunidades
-        Valor = DF_GeoformasIndicativas.loc[Caract]['VALOR']
+        if len(DF_GeoformasIndicativas[DF_GeoformasIndicativas['CODIGO'].isin([Caract])])> 1:
+            # Si la longitud es diferente de 0 se pondrá como indice la columna del acronimo
+            DF_GeoformasIndicativas.set_index('CODIGO', inplace=True)
+            # Se extrae el valor
+            Valor = DF_GeoformasIndicativas.loc[Caract]['VALOR'][0]
+        else:
+            # Si la longitud es diferente de 0 se pondrá como indice la columna del acronimo
+            DF_GeoformasIndicativas.set_index('CODIGO', inplace=True)
+            #Se extrae el valor
+            Valor = DF_GeoformasIndicativas.loc[Caract]['VALOR']
         
         if Valor == np.nan:
             Susceptibilidad = ["Alta", "Media", "Baja"]
@@ -179,8 +212,9 @@ xmin = extents.xMinimum()
 xmax = extents.xMaximum()
 ymin = extents.yMinimum()
 ymax = extents.yMaximum()
-CRS = QgsCoordinateReferenceSystem('EPSG:3116')
-params = {'EXPRESSION': Expresion, 'LAYERS': [Susceptibilidad_UGS], 'CELLSIZE':0, 'EXTENT': "%f,%f,%f,%f"% (xmin, xmax, ymin, ymax),'CRS': CRS,'OUTPUT': Output}
+params = {'EXPRESSION': Expresion, 'LAYERS': [Susceptibilidad_UGS],
+         'CELLSIZE':0, 'EXTENT': "%f,%f,%f,%f"% (xmin, xmax, ymin, ymax),
+         'CRS': None,'OUTPUT': Output}
 processing.run(alg,params)
 
 #Se reclasifica teniendo en cuenta que 1 será susceptibilidad baja, 2 media y 4 alta.
@@ -191,6 +225,10 @@ table = [0, 7, 1, 8, 10, 2, 11, 12, 4]  #[min1, max1, valor1, min2, max2, valor2
 params = {'INPUT_RASTER': Resultados_Caida, 'RASTER_BAND': 1, 'TABLE': table, 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 2,
            'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5,'OUTPUT': Susceptibilidad_Caida}
 processing.run(alg,params)
+
+# Se añade al lienzo
+Susceptibilidad_Caida = QgsRasterLayer(Susceptibilidad_Caida, "Susceptibilidad_Caida_Inicio")
+QgsProject.instance().addMapLayer(Susceptibilidad_Caida)
 
 ########################Zonificación de Susceptibilidad por zonas de deposito tipo Caida########################    
 
@@ -216,9 +254,8 @@ if os.path.isfile(Ruta_Zona_Deposito) is True:
                 
         # Se unen los poligonos de deposito
         alg = "native:mergevectorlayers"
-        CRS = QgsCoordinateReferenceSystem('EPSG:3116')
         Deposito = data_path + '/Pre_Proceso/Caida_Deposito.shp'
-        params = {'LAYERS': [Zona_Deposito, Caida_poligonos], 'CRS': CRS, 'OUTPUT': Deposito}
+        params = {'LAYERS': [Zona_Deposito, Caida_poligonos], 'CRS': None, 'OUTPUT': Deposito}
         processing.run(alg, params) 
         
     else:
@@ -238,6 +275,10 @@ if os.path.isfile(Deposito) is True:
     Raster = data_path + '/Resultados/Susceptibilidad_Caida_Pre.tif'
     params = {'INPUT': Deposito,'INPUT_RASTER': Raster,'BURN': 4,'ADD':True,'EXTRA':''}
     processing.run(alg, params)
+
+    # Se añade la capa al lienzo
+    Caidos_Deposito = QgsVectorLayer(Deposito, 'Caidos_Desposito')
+    QgsProject.instance().addMapLayer(Caidos_Deposito)
     
 #Se reclasifica teniendo en cuenta que 0 será susceptibilidad baja, 1 media y 2 alta.
 alg="native:reclassifybytable"
@@ -247,7 +288,8 @@ table=[1, 1, 0, 2, 2, 1, 3, 8, 2]  #[min1, max1, valor1, min2, max2, valor2, min
 params={'INPUT_RASTER': Resultados_Caida, 'RASTER_BAND': 1, 'TABLE': table, 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 2,
            'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5, 'OUTPUT': Susceptibilidad_Caida}
 processing.run(alg, params)
-    
+
+# Se añade al lienzo la susceptibilidad final
 Susceptibilidad_Caida = QgsRasterLayer(Susceptibilidad_Caida, "Susceptibilidad_Caida")
 QgsProject.instance().addMapLayer(Susceptibilidad_Caida)
 

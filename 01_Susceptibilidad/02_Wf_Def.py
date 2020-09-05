@@ -1,3 +1,14 @@
+"""
+@author: Nicole Alejadra Rodríguez Vargas
+nicole.rodriguez@correo.uis.edu.co
+"""
+
+"""
+En esta programación se desarrollan la metodología WofE en dónde se le asigna un peso final
+de evidencia a cada una de las características del factor doncionante según la importancia
+respecto a la ocurrencia de un deslizamiento.
+"""
+
 from PyQt5.QtWidgets import QInputDialog
 from PyQt5.QtWidgets import QMessageBox
 from qgis.PyQt.QtCore import QVariant
@@ -17,6 +28,16 @@ if ok == False:
     raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
 
+# Se listan los archivos en la ruta general
+list = listdir(data_path)
+
+# Se determinan los archivos con extensión .tif en la ruta
+raster = []
+for i in list:
+    if i[-4:] == '.tif':
+        raster.append(i)
+raster.append('None')
+
 #Se imprime una recomendación
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
                         'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
@@ -24,12 +45,11 @@ QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
 #Se determina el momento en que inicia la ejcución del programa
 start_time = time()
 
+# ############################ SE PLANTEA LA FUNCIÓN DEL MÉTODO ESTADÍSTICO BIVARIADO ############################ #
+
 #Se define la función Wf para determinar los pesos finales del factor condicionate
 def Wf(factor, Deslizamientos):
-    
-    #Lectura del raster del factor condicionante
-    rasterfile = data_path + f'/Pre_Proceso/{factor}.tif'
-    
+        
     # Análisis de deslizamientos si su geometria es puntos
     if Deslizamientos.wkbType()== QgsWkbTypes.Point:
         # Se muestrea el id de la caracteristica del factor condicionante en el punto de deslizamiento
@@ -44,8 +64,8 @@ def Wf(factor, Deslizamientos):
         # Interesección de el factor condicionante con el área de deslizamientos
         alg = "gdal:cliprasterbymasklayer"
         Deslizamiento_Condicion = data_path + f'/Pre_Proceso/Deslizamientos{factor}.tif'
-        params = {'INPUT': rasterfile, 'MASK': Deslizamientos, 'SOURCE_CRS': QgsCoordinateReferenceSystem('EPSG:3116'),
-                  'TARGET_CRS': QgsCoordinateReferenceSystem('EPSG:3116'), 'NODATA': None, 'ALPHA_BAND': False,
+        params = {'INPUT': rasterfile, 'MASK': Deslizamientos, 'SOURCE_CRS': None,
+                  'TARGET_CRS': None, 'NODATA': None, 'ALPHA_BAND': False,
                   'CROP_TO_CUTLINE': True, 'KEEP_RESOLUTION': False, 'SET_RESOLUTION': False, 'X_RESOLUTION': None,
                   'Y_RESOLUTION': None, 'MULTITHREADING': False, 'OPTIONS': '', 'DATA_TYPE': 0, 'EXTRA': '',
                   'OUTPUT': Deslizamiento_Condicion}
@@ -122,7 +142,7 @@ def Wf(factor, Deslizamientos):
     if factor == 'CurvaturaPlano':
         ciclo = percentiles
     elif factor == 'Pendiente':
-        ciclo = [0, 2, 4, 8, 16, 35, 55, 90]
+        ciclo = [0, 2, 4, 8, 16, 35, 55, 1000]
     else:
         ciclo = atributos
     
@@ -219,11 +239,13 @@ def Wf(factor, Deslizamientos):
     # Se añade la capa reclasificada con los Wf al lienzo
     iface.addRasterLayer(data_path + f'/Resultados/Wf_{factor}.tif', f"Wf_{factor}")
 
+# ############################ SE APLICA EL MÉTODO EN LOS FACTORES CONDICIONANTES DISCRETOS ############################ #
+
 # Se lee el archivo correspondientes a deslizamientos
 Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos.shp')
 
-# Se listan los factores condicionantes los cuales deben coincidir con los de rasterize más los continuos 
-Factor_Condicionante = ['UGS', 'SubunidadesGeomorf', 'CoberturaUso', 'CambioCobertura', 'Pendiente', 'CurvaturaPlano']
+# Se listan los factores condicionantes discretos
+Factor_Condicionante = ['UGS', 'SubunidadesGeomorf', 'CoberturaUso', 'CambioCobertura']
 
 # Se recorre la lista de factores condicionantes
 for factor in (Factor_Condicionante):
@@ -234,6 +256,31 @@ for factor in (Factor_Condicionante):
     if os.path.isfile(ruta) is False:
         continue
     # Se aplica la función del peso al factor condicionante
+    
+    #Lectura del raster del factor condicionante
+    rasterfile = data_path + f'/Pre_Proceso/{factor}.tif'
+    Wf(factor, Deslizamientos)
+
+# ############################ SE APLICA EL MÉTODO EN LOS FACTORES CONDICIONANTES CONTINUOS ############################ #
+
+# Se listan los factores condicionantes continuos
+Factor_Condicionante = ['Pendiente', 'CurvaturaPlano']
+
+# Se recorre la lista de factores condicionantes
+for factor in (Factor_Condicionante):
+    # Se determina la posible ruta del factor condicionante    
+    Ruta_Factor, ok = QInputDialog.getItem(None, f"{factor}",
+                                       f"Seleccione el archivo de {factor}",
+                                       raster, 0, False)
+    if ok == False:
+        raise Exception('Cancelar')
+    ruta = data_path + '/' + Ruta_Factor
+    
+    # Si el archivo no existe se continua 
+    if os.path.isfile(ruta) is False:
+        continue
+    # Se aplica la función del peso al factor condicionante
+    rasterfile = data_path + '/' + Ruta_Factor
     Wf(factor, Deslizamientos)
 
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
