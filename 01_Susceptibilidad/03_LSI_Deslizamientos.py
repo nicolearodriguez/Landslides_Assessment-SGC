@@ -21,6 +21,9 @@ import processing
 import gdal
 import os
 
+# Se determina el momento en que inicia la ejcución del programa
+start_time = time()
+
 # Ruta general de la ubicación de los archivos
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
 if ok == False:
@@ -29,16 +32,14 @@ data_path = data_path.replace("\\", "/")
 
 # Se imprime una recomendación
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
-                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
+                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos '
+                        'que este genera para evitar conflictos al reemplazar los archivos pre-existentes en especial los .shp')
 
 # Dimensiones del pixel
 cellsize, ok = QInputDialog.getDouble(
     None, 'Tamaño del pixel', 'Introduzca el tamaño del pixel: ')
 if ok == False:
     raise Exception('Cancelar')
-
-# Se determina el momento en que inicia la ejcución del programa
-start_time = time()
 
 # Capas raster reclasificadas con su respectivo Wf
 

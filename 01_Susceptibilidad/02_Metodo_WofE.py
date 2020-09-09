@@ -40,7 +40,8 @@ raster.append('None')
 
 #Se imprime una recomendación
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
-                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
+                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos '
+                        'que este genera para evitar conflictos al reemplazar los archivos pre-existentes en especial los .shp')
 
 #Se determina el momento en que inicia la ejcución del programa
 start_time = time()

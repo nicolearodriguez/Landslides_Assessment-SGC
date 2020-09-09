@@ -37,9 +37,13 @@ list = listdir(data_path)
 
 #Se imprime una recomendación
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
-                        'Se recomienda que el campo representativo para los factores condicionantes corresponda a acronimos de forma que no haya interferencia con caracteres que Qgis no distinga tales como ñ y tildes; además, en el caso de las subunidades geomorfologicas es necesario que estos despues coincidan con las subunidades indicativas de procesos como flujo y caidas')
+                        'Se recomienda que el campo representativo para los factores condicionantes corresponda a acronimos '
+                        'de forma que no haya interferencia con caracteres que Qgis no distinga tales como ñ y tildes; además, '
+                        'en el caso de las subunidades geomorfologicas es necesario que estos despues coincidan con las '
+                        'subunidades indicativas de procesos como flujo y caidas')
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
-                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes')
+                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos '
+                        'que este genera para evitar conflictos al reemplazar los archivos pre-existentes en especial los .shp')
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
                         'Es necesario que todos los tipos de deslizamiento estén unificados en un solo tipo, de igual forma con las caidas')
 
@@ -146,6 +150,12 @@ if ok == False:
 # MM tipo caida
 Caida, ok = QInputDialog.getText(
     None, 'MM tipo caida', 'Introduzca cómo están identificados los MM tipo caida: ')
+if ok == False:
+    raise Exception('Cancelar')
+
+# MM tipo reptación
+Reptacion, ok = QInputDialog.getText(
+    None, 'MM tipo reptación', 'Introduzca cómo están identificados los MM tipo reptación: ')
 if ok == False:
     raise Exception('Cancelar')
 
@@ -300,6 +310,12 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
         Mov_Masa_Corr, Caida_poligonos, "utf-8", 
         QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
         
+    # Se seleccionan los movimientos en masa tipo reptación y se guardan
+    Mov_Masa_Corr.selectByExpression(f'"{Campo_Poligono}"=\'{Reptacion}\'', QgsVectorLayer.SetSelection)
+    Reptacion_poligonos = data_path + '/Pre_Proceso/Reptacion_poligonos.shp'
+    QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Corr, Reptacion_poligonos, "utf-8", 
+        QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
+        
     #Se generan puntos en los centroides de los movimientos en masa
     alg = "native:centroids"
     Mov_Masa_poligonos = data_path + '/Pre_Proceso/Mov_Masa_poligonos.shp'
@@ -339,6 +355,12 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
         QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Deslizamientos_puntos, "utf-8", 
             QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
         
+        # Se seleccionan las reptación y se guardan
+        Mov_Masa_Puntos.selectByExpression(f'"{Campo_Puntos}"=\'{Reptacion}\'', QgsVectorLayer.SetSelection)
+        Reptacion_puntos = data_path+'/Pre_Proceso/Reptacion_puntos.shp'
+        QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Reptacion_puntos, "utf-8", 
+            QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
+            
         # Se seleccionan las caidas y se guardan
         Mov_Masa_Puntos.selectByExpression(f'"{Campo_Puntos}"=\'{Caida}\'', QgsVectorLayer.SetSelection)
         Caida_puntos = data_path+'/Pre_Proceso/Caida_puntos.shp'
@@ -405,6 +427,12 @@ elif os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
     Mov_Masa_Puntos.selectByExpression(f'"{Campo_Puntos}"=\'{Caida}\'', QgsVectorLayer.SetSelection)
     Caida_puntos = data_path+'/Pre_Proceso/Caida_puntos.shp'
     QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Caida_puntos, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
+    
+    # Si no hay mapa de poligonos se guarda la selección de reptación
+    Mov_Masa_Puntos.selectByExpression(f'"{Campo_Puntos}"=\'{Reptacion}\'', QgsVectorLayer.SetSelection)
+    Reptacion_puntos = data_path+'/Pre_Proceso/Reptacion_puntos.shp'
+    QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Reptacion_puntos, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
+    
     
     # Si no hay un mapa de poligonos entonces el mapa de puntos se guarda como movimientos
     Mov_Masa_Puntos = QgsVectorLayer(Ruta_Mov_Masa_Puntos, 'Mov_Masa_Puntos')

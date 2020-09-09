@@ -34,7 +34,8 @@ data_path = data_path.replace("\\", "/")
 
 #Se imprime una recomendación
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
-                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos que este genera para evitar conflictos al reemplazar los archivos pre-existentes en especial los .shp')
+                        'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos '
+                        'que este genera para evitar conflictos al reemplazar los archivos pre-existentes en especial los .shp')
 
 # Se listan los archivos en la ruta general
 list = listdir(data_path)
