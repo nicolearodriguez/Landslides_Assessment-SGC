@@ -1,6 +1,6 @@
 """
 @author: Nicole Alejadra Rodríguez Vargas
-nicole.rodriguez@correo.uis.edu.co
+@mail: nicole.rodriguez@correo.uis.edu.co
 """
 
 """
@@ -47,6 +47,8 @@ DF_Inv = DF_Inv.dropna(axis=0, subset=['FECHA_MOV'])
 DF_Inv.reset_index(level=0, inplace=True)
 DF_Inv['FECHA_MOV'] = DF_Inv['FECHA_MOV'].astype(str) #Identifico el nombre de la columna que contiene las fechas
 
+# ############################# CALCULO DE PROBABILIDAD ############################# #
+
 #Se crea el dataframe con el que se hace el análisis
 DF_Probabilidad = pd.DataFrame(columns=['Cluster', 'Tipo_Mov', 'Amenaza', 'P[R>Rt]'])
 DF_Final = pd.DataFrame()
@@ -56,7 +58,7 @@ Cluster = DF_Inv['CLUSTER_ID'].unique()
 Cluster = pd.DataFrame(Cluster, columns=['Cluster'],dtype=object)
 
 # Se recorre los valores de grupos de cluster
-for grupo in range (0,len(Cluster)):
+for grupo in range (0, len(Cluster)):
     Cluster_id = Cluster.loc[grupo,'Cluster']
     
     # Si la cantidad de datos de ese grupo es menor a dos no se puede hacer el análisis
@@ -69,7 +71,7 @@ for grupo in range (0,len(Cluster)):
     print('\n')
     
     # Se pone como indice la columna del cluster
-    DF_Inv.set_index('CLUSTER_ID',inplace=True)
+    DF_Inv.set_index('CLUSTER_ID', inplace=True)
     DF_Inv_Cluster = DF_Inv.loc[Cluster_id] # Se extraen los MM correspondientes a ese cluster
     DF_Inv_Cluster.reset_index(level=0, inplace=True)
     DF_Inv.reset_index(level=0, inplace=True)
@@ -82,11 +84,11 @@ for grupo in range (0,len(Cluster)):
     if Discritizacion == "Amenaza": Tipo_Evento = [1]
 
     #Se hace el estudio según el tipo de evento
-    for id_evento in range (0,len(Tipo_Evento)):
+    for id_evento in range (0, len(Tipo_Evento)):
         
         # Si la descretización es por tipo de movimiento y amenaza
         if Discritizacion == "Amenaza - Tipo de movimiento":
-            Tipo = Tipo_Evento.loc[id_evento,'Tipo_Mov']
+            Tipo = Tipo_Evento.loc[id_evento, 'Tipo_Mov']
             
             # Si los MM correspondientes a este tipo de movimiento son menores a dos no se puede continuar con el análisis
             if len(DF_Inv_Cluster[DF_Inv_Cluster['TIPO_MOV1'] == Tipo]) < 2:
@@ -98,7 +100,7 @@ for grupo in range (0,len(Cluster)):
             print('\n')
             
             # Se pone como indice la columna de tipo de movimiento
-            DF_Inv_Cluster.set_index('TIPO_MOV1',inplace=True)
+            DF_Inv_Cluster.set_index('TIPO_MOV1', inplace=True)
             # Se selecciona del inventario resultante anteriormente solo los del tipo en cuestión
             DF_Inv_Tipo = DF_Inv_Cluster.loc[Tipo]
             DF_Inv_Tipo.reset_index(level=0, inplace=True)
@@ -118,7 +120,7 @@ for grupo in range (0,len(Cluster)):
         else:
             # Si no se hará discretización por tipo de movimiento en masa
             # se copia el inventario anteriormente exportado solo por poligonos
-            DF_Inv_Tipo = DF_Inv_Cluster.copy(deep=True)
+            DF_Inv_Tipo = DF_Inv_Cluster.copy(deep = True)
             Campo_Amenaza = "Susc_Desli"
             Tipo = "Todos"
             
@@ -128,16 +130,16 @@ for grupo in range (0,len(Cluster)):
         
         # Se definen los valores únicos de amenaza que se tengan
         Categorias_Amenaza = DF_Inv_Tipo[Campo_Amenaza].unique()
-        Categorias_Amenaza = pd.DataFrame(Categorias_Amenaza,columns=['Amenaza'],dtype=object)
+        Categorias_Amenaza = pd.DataFrame(Categorias_Amenaza,columns = ['Amenaza'], dtype=object)
             
         #Se hace el estudio según la categoría de amenaza
-        for id_amenaza in range (0,len(Categorias_Amenaza)): 
-            Amenaza = Categorias_Amenaza.loc[id_amenaza,'Amenaza']
+        for id_amenaza in range (0, len(Categorias_Amenaza)): 
+            Amenaza = Categorias_Amenaza.loc[id_amenaza, 'Amenaza']
             
             # Según el id de la amenaza se puede determinar la categoria
-            if Amenaza ==2:
+            if Amenaza == 2:
                 Cat_amenaza = 'Alta'
-            elif Amenaza ==1:
+            elif Amenaza == 1:
                 Cat_amenaza = 'Media'
             else:
                 Cat_amenaza = 'Baja'
@@ -151,9 +153,9 @@ for grupo in range (0,len(Cluster)):
             print(f'Se hará el análisis para amenaza {Cat_amenaza}') #Se imprime la amenaza en el que va el análisis
             print('\n') # Se imprime un renglón en blanco
             
-            DF_Probabilidad.loc[id_amenaza,'Cluster'] = Cluster_id
-            DF_Probabilidad.loc[id_amenaza,'Amenaza'] = Cat_amenaza
-            DF_Probabilidad.loc[id_amenaza,'Tipo_Mov'] = Tipo
+            DF_Probabilidad.loc[id_amenaza, 'Cluster'] = Cluster_id
+            DF_Probabilidad.loc[id_amenaza, 'Amenaza'] = Cat_amenaza
+            DF_Probabilidad.loc[id_amenaza, 'Tipo_Mov'] = Tipo
 
             # Se pone como indice la columna de categoria de amenaza
             DF_Inv_Tipo.set_index(Campo_Amenaza, inplace = True)
@@ -163,20 +165,20 @@ for grupo in range (0,len(Cluster)):
             DF_Inv_Tipo.reset_index(level=0, inplace=True)
                 
             # Se extrae los valores únicos de fechas de reporte de movimientos en masa
-            DF_Fechas_Unicas_MM = pd.DataFrame(columns=['Fecha'],dtype=str)
+            DF_Fechas_Unicas_MM = pd.DataFrame(columns=['Fecha'], dtype=str)
             F = DF_Inv_Amenaza_Tipo['FECHA_MOV'].unique()
             DF_Fechas_Unicas_MM['Fecha'] = F
             DF_Fechas_Unicas_MM['Fecha'] = pd.to_datetime(DF_Fechas_Unicas_MM.Fecha, dayfirst=True)
             DF_Fechas_Unicas_MM = DF_Fechas_Unicas_MM.sort_values(by = 'Fecha')
             DF_Fechas_Unicas_MM.reset_index(level = 0, inplace = True)
-            DF_Fechas_Unicas_MM.drop(['index'],axis = 'columns', inplace = True)
+            DF_Fechas_Unicas_MM.drop(['index'], axis = 'columns', inplace = True)
             
             # Se determina la fecha inicial con la que se cuenta con datos
             inicio = DF_Fechas_Unicas_MM.loc[0]['Fecha']
             inicio1 = str(inicio.strftime("%d/%m/%Y"))
             print(f'La fecha inicial es {inicio1}')
             # Se determina la fecha final en la que se cuenta con datos
-            fin = DF_Fechas_Unicas_MM.loc[len(DF_Fechas_Unicas_MM)-1]['Fecha']
+            fin = DF_Fechas_Unicas_MM.loc[len(DF_Fechas_Unicas_MM) - 1]['Fecha']
             fin1 = str(fin.strftime("%d/%m/%Y"))
             print(f'La fecha final es {fin1}')
              
@@ -200,12 +202,15 @@ for grupo in range (0,len(Cluster)):
 
 # Se ordena el dataframe con base en el id de los Cluster
 DF_Final = DF_Final.sort_values(by = 'Cluster')
-DF_Final.reset_index(level=0, inplace=True)
-DF_Final = DF_Final.drop(['index'], axis=1)
+DF_Final.reset_index(level = 0, inplace = True)
+DF_Final = DF_Final.drop(['index'], axis = 1)
 print(DF_Final)
 print('\n')
+
 # Se exporta el dataframe como archivo csv
-DF_Final.reset_index().to_csv(data_path + '/Resultados/DF_Amenaza_Sismo.csv',header=True,index=False)
+DF_Final.reset_index().to_csv(data_path + '/Resultados/DF_Amenaza_Sismo.csv', header = True, index = False)
+
+# ############################# ESPACIALIZACIÓN DE LOS RESULTADOS ############################# #
 
 # Se lee los poligonos en los que se llenará la probabilidad
 Amenaza_Sismo = QgsVectorLayer(data_path + '/Amenaza/Amenaza_Sismos.shp')

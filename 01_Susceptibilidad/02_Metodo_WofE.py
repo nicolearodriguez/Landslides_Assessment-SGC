@@ -1,6 +1,6 @@
 """
 @author: Nicole Alejadra Rodríguez Vargas
-nicole.rodriguez@correo.uis.edu.co
+@mail: nicole.rodriguez@correo.uis.edu.co
 """
 
 """
@@ -22,6 +22,9 @@ import numpy as np
 import processing
 import os
 
+#Se determina el momento en que inicia la ejcución del programa
+start_time = time()
+
 # Ruta general de la ubicación de los archivos
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
 if ok == False:
@@ -42,9 +45,6 @@ raster.append('None')
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
                         'Se recomienda que si ya se ha ejecutado el programa con anterioridad sean borrados los archivos '
                         'que este genera para evitar conflictos al reemplazar los archivos pre-existentes en especial los .shp')
-
-#Se determina el momento en que inicia la ejcución del programa
-start_time = time()
 
 # ############################ SE PLANTEA LA FUNCIÓN DEL MÉTODO ESTADÍSTICO BIVARIADO ############################ #
 
@@ -93,6 +93,7 @@ def Wf(factor, Deslizamientos):
     # Lectura de las estadísticas de toda la zona como dataframe
     Estadisticas_Condicionante = data_path + f'/Pre_Proceso/{factor}Estadistica.csv'
     DF_Estadistica = pd.read_csv(Estadisticas_Condicionante, encoding='latin-1')
+    
     # Valores únicos del factor condicionante
     atributos = DF_Estadistica["zone"].unique()
     Factor_ID = pd.DataFrame(atributos)

@@ -1,6 +1,6 @@
 """
 @author: Nicole Alejadra Rodríguez Vargas
-nicole.rodriguez@correo.uis.edu.co
+@mail: nicole.rodriguez@correo.uis.edu.co
 """
 
 """
@@ -29,7 +29,7 @@ if ok == False:
     raise Exception('Cancelar')
 data_path = data_path.replace("\\", "/")
 
-# Se reclasifican la susceptibilidad alta de 2 a 3 para que no hayan valores erroneos en la susceptibilidad finalMapPoint
+# Se reclasifican la susceptibilidad alta de 2 a 3 para que no hayan valores erroneos en la susceptibilidad final
 
 # Susceptibilidad deslizamientos
 alg="native:reclassifybytable"

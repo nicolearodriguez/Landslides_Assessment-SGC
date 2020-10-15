@@ -1,6 +1,6 @@
 """
 @author: Nicole Alejadra Rodríguez Vargas
-nicole.rodriguez@correo.uis.edu.co
+@mail: nicole.rodriguez@correo.uis.edu.co
 """
 
 """
@@ -31,7 +31,6 @@ QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
                         'con las geoformas indicativas de procesos tipo caída '
                         '(GeoformasIndicativasProcesoTipoCaida.csv) y este guardada '
                         'en la ruta general dónde se encuentran los insumos.')
-
 
 # Ruta general de la ubicación de los archivos
 data_path, ok = QInputDialog.getText(None, 'RUTA', 'Introduzca la ruta general: ')
@@ -87,10 +86,10 @@ if ok == False:
 #Se reclasifica teniendo en cuenta que 0 serán las pendientes menores a 45, y serán 1 las pendientes mayores a 45.
 alg="native:reclassifybytable"
 Pendientes = data_path + '/' + Pendiente
-Susceptibilidad_Pendiente = data_path+'/Pre_Proceso/Pendientes_Suscep.tif'
+Suscep_Caida_Pendiente = data_path+'/Pre_Proceso/Suscep_Caida_Pendiente.tif'
 table = [0, 45, 0, 45, 100, 5]  # [min1, max1, valor1, min2, max2, valor2]  min<valor<=max
 params = {'INPUT_RASTER': Pendientes,'RASTER_BAND': 1,'TABLE': table,'NO_DATA': -9999,'RANGE_BOUNDARIES': 0,
-          'NODATA_FOR_MISSING': True,'DATA_TYPE': 5,'OUTPUT': Susceptibilidad_Pendiente}
+          'NODATA_FOR_MISSING': True,'DATA_TYPE': 5,'OUTPUT': Suscep_Caida_Pendiente}
 processing.run(alg, params)
 
 # Asiganción de valor según SUBUNIDADES GEOMORFOLOGICAS INDICATIVAS
@@ -161,6 +160,9 @@ for i in range(0, len(DF_SubunidadesGeoform)):
 print('No se encontraró la categoría de susceptibilidad para las siguientes subunidades geomorfologicas')
 print(Geoformas_NaN)
 
+# Se eliminan las columnas no necesarias en el análisis
+DF_SubunidadesGeoform = DF_SubunidadesGeoform.drop(['General'], axis=1)
+DF_SubunidadesGeoform = DF_SubunidadesGeoform.drop(['Caract_3'], axis=1)
 # Se imprimen las categorías finales asignadas
 print('Subunidades geomorfologicas encontradas en el área de estudio: ')
 print(DF_SubunidadesGeoform)
@@ -178,10 +180,10 @@ QMessageBox.information(iface.mainWindow(), "Categorías de susceptibilidad seg�
 alg="native:reclassifybylayer"
 Factor_Condicionante = data_path + '/Pre_Proceso/SubunidadesGeomorf.tif'
 DF_SubunidadesGeomorf = data_path + '/Pre_Proceso/DF_RasterCaida_SubunidadesGeoform.csv'
-Susceptibilidad_SubunidadesGeomorf = data_path + '/Resultados/SusceptibilidadCaida_SubunidadesGeomorf.tif'
+Suscep_Caida_SubunidadesGeomorf = data_path + '/Pre_Proceso/Suscep_Caida_SubunidadesGeomorf.tif'
 params={'INPUT_RASTER': Factor_Condicionante, 'RASTER_BAND': 1,'INPUT_TABLE': DF_SubunidadesGeomorf, 'MIN_FIELD': 'ID',
         'MAX_FIELD': 'ID', 'VALUE_FIELD': 'Valor', 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 2, 'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5,
-        'OUTPUT': Susceptibilidad_SubunidadesGeomorf}
+        'OUTPUT': Suscep_Caida_SubunidadesGeomorf}
 processing.run(alg, params)
 
 #Asignación de valor según TIPO DE ROCA
@@ -203,44 +205,51 @@ print('Unidades geologicas superficiales encontradas en el área de estudio: ')
 print(DF_UGS)
 DF_UGS.reset_index().to_csv(data_path + '/Pre_Proceso/DF_Raster_UGS.csv', header = True, index = False)
 
-#Reclasificación del raster con el valor de Susceptibilidad correspondiente al TIPO DE ROCA.
+QMessageBox.information(iface.mainWindow(), "Categorías de susceptibilidad según las UGS",
+                        f'Las UGS fueron caracterizadas según el DataFrame impreso'
+                        'Si desea hacer algun ajuste vaya a la carpeta de Pre_Proceso y busque el archivo "DF_Raster_UGS.csv" '
+                        'dónde puede cambiar en la columna "Valor" la categoría de susceptibilidad teniendo en cuenta que 0: Baja, 2: Media y 5: Alta, '
+                        'haga el ajuste y guarde ANTES de dar "Aceptar", si está de acuerdo con las categorías puede continuar')
+
+# Reclasificación del raster con el valor de Susceptibilidad correspondiente al TIPO DE ROCA.
 alg="native:reclassifybylayer"
-Factor_Condicionante = data_path+'/Pre_Proceso/UGS.tif'
+Factor_Condicionante = data_path + '/Pre_Proceso/UGS.tif'
 DF_UGS = data_path + '/Pre_Proceso/DF_Raster_UGS.csv'
-Susceptibilidad_UGS = data_path+'/Resultados/Susceptibilidad_UGS.tif'
-params={'INPUT_RASTER': Factor_Condicionante, 'RASTER_BAND': 1, 'INPUT_TABLE': DF_UGS, 'MIN_FIELD': 'ID',
-        'MAX_FIELD': 'ID', 'VALUE_FIELD': 'Valor', 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 2, 'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5,
-        'OUTPUT': Susceptibilidad_UGS}
+Suscep_Caida_UGS = data_path + '/Pre_Proceso/Suscep_Caida_UGS.tif'
+params={'INPUT_RASTER': Factor_Condicionante, 'RASTER_BAND': 1, 'INPUT_TABLE': DF_UGS,
+        'MIN_FIELD': 'ID', 'MAX_FIELD': 'ID', 'VALUE_FIELD': 'Valor', 'NO_DATA': -9999,
+        'RANGE_BOUNDARIES': 2, 'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5,
+        'OUTPUT': Suscep_Caida_UGS}
 processing.run(alg, params)
 
-#Suma de los valores
-Susceptibilidad_Pendiente = QgsRasterLayer(data_path + '/Pre_Proceso/Pendientes_Suscep.tif', "Susceptibilidad_Pendiente")
-QgsProject.instance().addMapLayer(Susceptibilidad_Pendiente)
-SusceptibilidadCaida_SubunidadesGeomorf = QgsRasterLayer(data_path + '/Resultados/SusceptibilidadCaida_SubunidadesGeomorf.tif', "SusceptibilidadCaida_SubunidadesGeomorf")
-QgsProject.instance().addMapLayer(SusceptibilidadCaida_SubunidadesGeomorf)
-Susceptibilidad_UGS = QgsRasterLayer(data_path + '/Resultados/Susceptibilidad_UGS.tif', "Susceptibilidad_UGS")
-QgsProject.instance().addMapLayer(Susceptibilidad_UGS)
+# Suma de los valores
+Suscep_Caida_Pendiente = QgsRasterLayer(data_path + '/Pre_Proceso/Suscep_Caida_Pendiente.tif', "Suscep_Caida_Pendiente")
+QgsProject.instance().addMapLayer(Suscep_Caida_Pendiente)
+Suscep_Caida_SubunidadesGeomorf = QgsRasterLayer(data_path + '/Pre_Proceso/Suscep_Caida_SubunidadesGeomorf.tif', "Suscep_Caida_SubunidadesGeomorf")
+QgsProject.instance().addMapLayer(Suscep_Caida_SubunidadesGeomorf)
+Suscep_Caida_UGS = QgsRasterLayer(data_path + '/Pre_Proceso/Suscep_Caida_UGS.tif', "Suscep_Caida_UGS")
+QgsProject.instance().addMapLayer(Suscep_Caida_UGS)
+
+# Dirección del resultado de la suma de los valores de susceptibilidad
+Output = data_path + '/Pre_Proceso/Susceptibilidad_Caida_Pre.tif'
     
-#Dirección del resultado de la suma de los valores de susceptibilidad
-Output = data_path + '/Resultados/Susceptibilidad_Inicio_Caida.tif'
-    
-#Sumatoria de los raster
+# Sumatoria de los raster
 alg = "qgis:rastercalculator"
-Expresion = '\"Susceptibilidad_Pendiente@1\" + \"SusceptibilidadCaida_SubunidadesGeomorf@1\" + \"Susceptibilidad_UGS@1\"'
-extents = Susceptibilidad_UGS.extent() #Extensión de la capa
+Expresion = '\"Suscep_Caida_Pendiente@1\" + \"Suscep_Caida_SubunidadesGeomorf@1\" + \"Suscep_Caida_UGS@1\"'
+extents = Suscep_Caida_UGS.extent() #Extensión de la capa
 xmin = extents.xMinimum()
 xmax = extents.xMaximum()
 ymin = extents.yMinimum()
 ymax = extents.yMaximum()
-params = {'EXPRESSION': Expresion, 'LAYERS': [Susceptibilidad_UGS],
+params = {'EXPRESSION': Expresion, 'LAYERS': [Suscep_Caida_UGS],
          'CELLSIZE':0, 'EXTENT': "%f,%f,%f,%f"% (xmin, xmax, ymin, ymax),
          'CRS': None,'OUTPUT': Output}
 processing.run(alg,params)
 
 #Se reclasifica teniendo en cuenta que 1 será susceptibilidad baja, 2 media y 4 alta.
 alg = "native:reclassifybytable"
-Resultados_Caida = data_path + '/Resultados/Susceptibilidad_Inicio_Caida.tif'
-Susceptibilidad_Caida = data_path + '/Resultados/Susceptibilidad_Caida_Pre.tif'
+Resultados_Caida = data_path + '/Pre_Proceso/Susceptibilidad_Caida_Pre.tif'
+Susceptibilidad_Caida = data_path + '/Resultados/Susceptibilidad_Inicio_Caida.tif'
 table = [0, 7, 1, 8, 10, 2, 11, 12, 4]  #[min1, max1, valor1, min2, max2, valor2, min3, max3, valor3] min <= valor <= max
 params = {'INPUT_RASTER': Resultados_Caida, 'RASTER_BAND': 1, 'TABLE': table, 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 2,
            'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5,'OUTPUT': Susceptibilidad_Caida}
@@ -292,8 +301,8 @@ else:
 if os.path.isfile(Deposito) is True:
     # Se sobreescriben las áreas de depósito con un valor de 1
     alg = "gdal:rasterize_over_fixed_value"
-    Raster = data_path + '/Resultados/Susceptibilidad_Caida_Pre.tif'
-    params = {'INPUT': Deposito,'INPUT_RASTER': Raster,'BURN': 4,'ADD':True,'EXTRA':''}
+    Raster = data_path + '/Resultados/Susceptibilidad_Inicio_Caida.tif'
+    params = {'INPUT': Deposito,'INPUT_RASTER': Raster,'BURN': 4,'ADD': True,'EXTRA': ''}
     processing.run(alg, params)
 
     # Se añade la capa al lienzo
@@ -302,7 +311,7 @@ if os.path.isfile(Deposito) is True:
     
 #Se reclasifica teniendo en cuenta que 0 será susceptibilidad baja, 1 media y 2 alta.
 alg="native:reclassifybytable"
-Resultados_Caida = data_path + '/Resultados/Susceptibilidad_Caida_Pre.tif'
+Resultados_Caida = data_path + '/Resultados/Susceptibilidad_Inicio_Caida.tif'
 Susceptibilidad_Caida = data_path + '/Resultados/Susceptibilidad_Caida.tif'
 table=[1, 1, 0, 2, 2, 1, 3, 8, 2]  #[min1, max1, valor1, min2, max2, valor2, min3, max3, valor3] min <= valor <= max
 params={'INPUT_RASTER': Resultados_Caida, 'RASTER_BAND': 1, 'TABLE': table, 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 2,

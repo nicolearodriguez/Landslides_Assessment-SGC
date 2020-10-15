@@ -1,6 +1,6 @@
 """
 @author: Nicole Alejadra Rodríguez Vargas
-nicole.rodriguez@correo.uis.edu.co
+@mail: nicole.rodriguez@correo.uis.edu.co
 """
 
 """
@@ -119,6 +119,9 @@ for i in range(0, len(DF_SubunidadesGeoform)):
 print('No se encontraró la categoría de susceptibilidad para las siguientes subunidades geomorfologicas')
 print(Geoformas_NaN)
 
+# Se eliminan las columnas no necesarias en el análisis
+DF_SubunidadesGeoform = DF_SubunidadesGeoform.drop(['General'], axis=1)
+DF_SubunidadesGeoform = DF_SubunidadesGeoform.drop(['Caract_3'], axis=1)
 # Se imprimen las categorías finales asignadas
 print('Subunidades geomorfologicas encontradas en el área de estudio: ')
 print(DF_SubunidadesGeoform)

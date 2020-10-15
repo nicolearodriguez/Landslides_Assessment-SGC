@@ -1,6 +1,6 @@
 """
 @author: Nicole Alejadra Rodríguez Vargas
-nicole.rodriguez@correo.uis.edu.co
+@mail: nicole.rodriguez@correo.uis.edu.co
 """
 
 """
@@ -70,11 +70,13 @@ QgsProject.instance().addMapLayer(Wf_CurvaturaPlano)
 
 # Cambio de cobertura
 Ruta_CambioCobertura = data_path + '/Resultados/Wf_CambioCobertura.tif'
+
 if os.path.isfile(Ruta_CambioCobertura) is True:
     # Si el archivo existe se tiene en cuenta en la suma
     Wf_CambioCobertura = QgsRasterLayer(Ruta_CambioCobertura, "Wf_CambioCobertura")
     QgsProject.instance().addMapLayer(Wf_CambioCobertura)
     Expresion = '\"Wf_CoberturaUso@1\" + \"Wf_CurvaturaPlano@1\" + \"Wf_SubunidadesGeomorf@1\" + \"Wf_Pendiente@1\" + \"Wf_UGS@1\" + \"Wf_CambioCobertura@1\"'
+
 else: 
     # Si cambio de cobertura no existe no se tiene en cuenta para la suma de pesos
     Expresion = '\"Wf_CoberturaUso@1\" + \"Wf_CurvaturaPlano@1\" + \"Wf_SubunidadesGeomorf@1\" + \"Wf_Pendiente@1\" + \"Wf_UGS@1\"'
@@ -104,6 +106,7 @@ rasterfile = data_path + '/Resultados/LSI.tif'
 Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos.shp')
 
 # Dependiendo de la geometría de los deslizamientos se hace el procedimiento
+
 if Deslizamientos.wkbType() == QgsWkbTypes.Point:
     # Obtenermos el id de la caracteristica del punto de deslizamiento
     alg = "qgis:rastersampling"

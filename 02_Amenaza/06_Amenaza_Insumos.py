@@ -1,6 +1,6 @@
 """
 @author: Nicole Alejadra Rodríguez Vargas
-nicole.rodriguez@correo.uis.edu.co
+@mail: nicole.rodriguez@correo.uis.edu.co
 """
 
 """
@@ -48,7 +48,8 @@ for i in list:
 shape.append('None')
 
 # Sistema de referencia de coordenadas
-SRC_Destino, ok = QInputDialog.getText(None, 'SRC', 'Introduzca el ID del sistema de referencia de coordenadas PLANAS para la reproyección de las capas necesarias, Ejm= EPSG:3116')
+SRC_Destino, ok = QInputDialog.getText(None, 'SRC', 'Introduzca el ID del sistema de referencia de coordenadas '
+                                       'PLANAS para la reproyección de las capas necesarias, Ejm= EPSG:3116')
 if ok == False:
     raise Exception('Cancelar')
 
@@ -134,6 +135,13 @@ for field in Mov_Masa.fields():
 # Nombre del campo dónde se encuentran la fecha de MM
 Fecha_MM, ok = QInputDialog.getItem(None, "Fecha de MM",
                                     "Nombre del campo dónde se encuentran la fecha del MM",
+                                    atributos_Mov_Masa, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
+    
+# Nombre del campo dónde se encuentran la fecha de MM
+Tipo_MM, ok = QInputDialog.getItem(None, "Tipo de MM",
+                                    "Nombre del campo dónde se encuentran el tipo del MM",
                                     atributos_Mov_Masa, 0, False)
 if ok == False:
     raise Exception('Cancelar')
@@ -224,22 +232,26 @@ for feature in selection:  # Se recorren las filas seleccionadas
         # Se hace el cambio de los atributos
         Mov_Masa.dataProvider().changeAttributeValues({fid: attrs})
 
+# ############################# POLIGONOS DE ANÁLISIS ############################# #
+
+# SISMOS CON BASE EN EL NÚMERO DE GRUPOS
+
 #Se obtienen los centroides de los grupos de movimientos
 alg = "native:meancoordinates"
 Centroides = data_path + '/Pre_Proceso/Centroides_Cluster.shp'
 params = {'INPUT': Mov_Masa,'WEIGHT':'CLUSTER_ID','UID':'CLUSTER_ID','OUTPUT': Centroides}
 processing.run(alg, params)
 
-# Si se tiene suficientes estaciones se crean los poligonos de Voronoi
+# Si se tiene suficientes grupos se crean los poligonos de Voronoi
 if grupo > 2:
-    #Se crean los poligonos de análisis de sismos con base en los centroides
+    # Se crean los poligonos de análisis de sismos con base en los centroides
     alg = "qgis:voronoipolygons"
     Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Sismo.shp'
     params = {'INPUT': Centroides,'BUFFER':50,'OUTPUT': Poligonos}
     processing.run(alg, params)
 
 else:
-    # Si solo se cuenta con una o dos estaciones se crea un buffer del punto
+    # Si solo se cuenta con una o dos grupos se crea un buffer del punto
     alg = "native:buffer"
     Poligonos = data_path + '/Pre_Proceso/Poligonos_Buffer_Sismo.shp'
     params = {'INPUT': Centroides, 'DISTANCE':10000, 'SEGMENTS':5,
@@ -247,7 +259,7 @@ else:
               'DISSOLVE':False, 'OUTPUT':Poligonos}
     processing.run(alg, params)
 
-#Se cortan los poligonos de sismos según la extensión de análisis
+# Se cortan los poligonos de sismos según la extensión de análisis
 alg = "gdal:clipvectorbyextent"
 Salida = data_path + '/Amenaza/Amenaza_Sismos.shp'
 extents = Susceptibilidad_Deslizamientos.extent()  # Capa de referencia de la extensión
@@ -259,7 +271,7 @@ params = {'INPUT': Poligonos,'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax),
           'OPTIONS':'','OUTPUT': Salida}
 processing.run(alg, params)
 
-############################## MUESTREO DE SUSCEPTIBILIDAD ##############################
+# LLUVIA CON BASE EN EL NÚMERO DE ESTACIONES
 
 # Se determina cuántas estaciones hay
 flat_list = []
@@ -371,7 +383,9 @@ Mov_Masa_Amenaza_Poligono = data_path + '/Pre_Proceso/Mov_Masa_Amenaza_Poligono.
 params = {'INPUT': Mov_Masa, 'RASTERCOPY': rasterfile,
           'COLUMN_PREFIX': 'Poli_Voron', 'OUTPUT': Mov_Masa_Amenaza_Poligono}
 processing.run(alg, params)
- 
+
+# ############################# MUESTREO DE SUSCEPTIBILIDAD ############################# # 
+
 # Se muestrea la susceptibilidad por deslizamientos
 alg = "qgis:rastersampling"
 rasterfile = Susceptibilidad_Deslizamientos
@@ -493,7 +507,7 @@ Sismos['Ulusay'] = None
 Sismos['Kadirioglu'] = None
 Sismos['Promedio'] = None
 
-# Se hace la conversión de unidades a Mw
+# Se hace la conversión de unidades a Mw para todos los autores
 
 #Mb
 Sismos.loc[Sismos["Unidad"].str.startswith('mb') & (Sismos.Magnitud >= 3.5) & (Sismos.Magnitud <= 6.2),
@@ -545,11 +559,12 @@ Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 3.4) & (S
 Sismos.loc[Sismos["Unidad"].str.startswith('ms') & (Sismos.Magnitud >= 5.5),
            'Kadirioglu'] = 0.8126 * Sismos.Magnitud + 1.1723
 
-#Se hace el promedio de los resultados para obtener Mw
+# Las magnitudes que si esten con Mw se agregan a todas las columnas
 Sismos.loc[Sismos["Unidad"].str.startswith('mw'), ['Scordilis', 'Grunthal', 'Akkar', 'Ulusay', 'Kadirioglu', 'Promedio']] = Sismos.Magnitud
+# Se hace el promedio de los resultados para obtener Mw
 Sismos['Promedio'] = Sismos[['Scordilis', 'Grunthal', 'Akkar', 'Ulusay', 'Kadirioglu']].mean(axis=1)
 
-#Se seleccionan los sismos con la magnitud mayor a la minima 
+# Se seleccionan los sismos con la magnitud mayor a la minima 
 Sismo_Detonante = Sismos.loc[(Sismos[Autor] >= 5)]
 Sismo_Detonante.reset_index().to_csv(data_path + '/Amenaza/Sismos.csv', header = True, index = False)
 print('Los sismos resultantes son: ')
@@ -557,7 +572,7 @@ print(Sismo_Detonante)
 
 ############################## DETERMINACIÓN DEL DETONANTE ##############################
 
-# CSV de los sismos
+# CSV de los sismos leído como dataframe
 FILE_NAME = data_path + '/Amenaza/Sismos.csv'
 DF_Sismos = pd.read_csv(FILE_NAME, encoding = 'latin-1')
 DF_Sismos[Fecha_Sismo] = pd.to_datetime(DF_Sismos[Fecha_Sismo])
@@ -569,7 +584,8 @@ DF_Mov_Masa = DF_Mov_Masa.dropna(axis=0, subset=[Fecha_MM])
 DF_Mov_Masa.reset_index(level=0, inplace=True)
 DF_Mov_Masa[Fecha_MM] = pd.to_datetime(DF_Mov_Masa[Fecha_MM])
 
-# Se listan las fechas de MM con un respectivo umbral
+# Se listan las fechas de MM con un respectivo umbral 
+# y atributos de interes como coordenadas e índice
 DF_Fechas_MM = pd.DataFrame()
 for i in range(0, len(DF_Mov_Masa)):
     date = DF_Mov_Masa.loc[i, Fecha_MM]
@@ -584,11 +600,11 @@ for i in range(0, len(DF_Mov_Masa)):
 
 DF_Fechas_MM.reset_index(level=0, inplace=True)
 
-# Extraigo los valores únicos de las fechas
+# Extraigo los valores únicos de las fechas de movimientos en masa y sismos
 DF_Fechas_Mov = DF_Fechas_MM['Fecha'].unique()
 DF_Fechas_Sismo = DF_Sismos[Fecha_Sismo].unique()
 
-#Se hace la intersección de las fechas de MM y sismos, extrayendo las que coinciden
+# Se hace la intersección de las fechas de MM y sismos, extrayendo las que coinciden
 Fechas = set(DF_Fechas_Mov).intersection(set(DF_Fechas_Sismo)) 
 Fechas = pd.DataFrame(Fechas, columns = ['date'])
 
@@ -597,7 +613,7 @@ DF_Mov_Sismos = pd.DataFrame(columns=['Indice'])
 
 # Se recorren las fechas coincidentes de MM y sismo
 for j in range (0, len(Fechas)):
-    # Se determina la fecha
+    # Se determina la fecha de las previamente coincidentes
     Fecha = Fechas.loc[j, 'date']
     # Se determinan los índices de los sismos con la fecha en cuestión
     Indices = DF_Sismos[DF_Sismos[Fecha_Sismo] == Fecha].index
@@ -619,7 +635,7 @@ for j in range (0, len(Fechas)):
     #Se va llenando el dataframe a medida que se recorren las fechas de intersección
     DF_Mov_Sismos = DF_Mov_Sismos.append(DF_Escogido)
 
-# Se extraen los índices únicos de los MM resultantes
+# Se extraen los índices únicos de los MM resultantes detonados por sismos
 Indices_Mov = DF_Mov_Sismos['Indice'].unique()
 Indices_Mov = Indices_Mov.tolist()
 
@@ -630,7 +646,9 @@ DF_Mov_Masa.loc[Indices_Mov, 'Detonante'] = "Sismo"
 # Los MM restantes se asocian al detonante lluvia
 DF_Mov_Masa.loc[DF_Mov_Masa.Detonante != "Sismo", 'Detonante'] = "Lluvia"
 
+# Se renombran las columnas para los posteriores análisis
 DF_Mov_Masa.rename(columns = {Fecha_MM : 'FECHA_MOV'}, inplace = True)
+DF_Mov_Masa.rename(columns = {Tipo_MM : 'TIPO_MOV1'}, inplace = True)
 
 # Se parte el dataframe con base en el detonante
 DF_Mov_Masa_Sismos = DF_Mov_Masa.loc[DF_Mov_Masa['Detonante'] == 'Sismo']

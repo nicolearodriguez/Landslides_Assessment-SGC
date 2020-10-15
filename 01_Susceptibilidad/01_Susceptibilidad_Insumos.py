@@ -1,6 +1,6 @@
 """
 @author: Nicole Alejadra Rodríguez Vargas
-nicole.rodriguez@correo.uis.edu.co
+@mail: nicole.rodriguez@correo.uis.edu.co
 """
 
 """
@@ -82,7 +82,7 @@ if ok == False:
     raise Exception('Cancelar')
 Ruta_Mov_Masa_Puntos = data_path + '/' + Mov_Masa_Puntos
 
-#Se determina si existe el archivo de MM 
+# Se determina si existe el archivo de MM 
 if os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
     Mov_Masa_Puntos = QgsVectorLayer(data_path + '/' + Mov_Masa_Puntos)
     
@@ -96,6 +96,13 @@ if os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
                                             "Campo del tipo de movimiento en masa con geometría de punto", atributos_Mov_Masa_Puntos, 0, False)
     if ok == False:
         raise Exception('Cancelar')
+        
+    # Se obtienen los valores únicos de las caracteristicas
+    uniquevalues = []
+    uniqueprovider = Mov_Masa_Puntos.dataProvider()
+    fields = uniqueprovider.fields()
+    id = fields.indexFromName(Campo_Puntos)
+    atributos_MM = uniqueprovider.uniqueValues(id)
     
     # Campo dónde se encuentra la fecha del movimiento en masa para la capa de puntos
     Fecha_Puntos, ok = QInputDialog.getItem(None, "Fecha de movimiento en masa",
@@ -124,6 +131,14 @@ if os.path.isfile(Ruta_Mov_Masa_Poligono) is True:
                                               "Campo del tipo de movimiento en masa con geometría de poligono", atributos_Mov_Masa_Poligono, 0, False)
     if ok == False:
         raise Exception('Cancelar')
+        
+    # Se obtienen los valores únicos de las caracteristicas
+    uniquevalues = []
+    uniqueprovider = Mov_Masa_Poligono.dataProvider()
+    fields = uniqueprovider.fields()
+    id = fields.indexFromName(Campo_Poligono)
+    atributos_MM = uniqueprovider.uniqueValues(id)
+    
     # Campo dónde se encuentra el tipo de movimiento en masa para la capa de poligonos
     Fecha_Poligono, ok = QInputDialog.getItem(None, "Fecha de movimiento en masa",
                                               "Campo de la fecha de movimiento en masa con geometría de poligono", atributos_Mov_Masa_Poligono, 0, False)
@@ -142,20 +157,23 @@ if os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
                                  'Los campos de la fecha de MM de las capas de movimientos debe ser iguales')
 
 # MM tipo deslizamiento
-Deslizamiento, ok = QInputDialog.getText(
-    None, 'MM tipo deslizamiento', 'Introduzca cómo están identificados los MM tipo deslizamiento: ')
+Deslizamiento, ok = QInputDialog.getItem(
+    None, 'MM tipo deslizamiento', 'Cómo están identificados los MM tipo deslizamiento',
+    atributos_MM, 0, False)
 if ok == False:
     raise Exception('Cancelar')
 
 # MM tipo caida
-Caida, ok = QInputDialog.getText(
-    None, 'MM tipo caida', 'Introduzca cómo están identificados los MM tipo caida: ')
+Caida, ok = QInputDialog.getItem(
+    None, 'MM tipo caida', 'Cómo están identificados los MM tipo caida',
+    atributos_MM, 0, False)
 if ok == False:
     raise Exception('Cancelar')
 
 # MM tipo reptación
-Reptacion, ok = QInputDialog.getText(
-    None, 'MM tipo reptación', 'Introduzca cómo están identificados los MM tipo reptación: ')
+Reptacion, ok = QInputDialog.getItem(
+    None, 'MM tipo reptación', 'Cómo están identificados los MM tipo reptación',
+    atributos_MM, 0, False)
 if ok == False:
     raise Exception('Cancelar')
 
@@ -168,6 +186,7 @@ if ok == False:
 # ##################################### Factores Condicionantes ##################################### #
 
 # Se define la función rasterize para la rasterización de los factores condicionantes con base en el campo representativo
+
 def rasterize(Factor_Condicionante):
     # Se ingresa el archivo vectorial del factor condicionante
     Ruta_Factor, ok = QInputDialog.getItem(None, f"{Factor_Condicionante}", f"Seleccione el archivo de {Factor_Condicionante}", shape, 0, False)
