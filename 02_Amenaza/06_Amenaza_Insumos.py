@@ -148,7 +148,7 @@ if ok == False:
 
 # Umbral de días para los movimientos en masa
 dias, ok = QInputDialog.getInt(None, 'Umbral de días de la fecha del inventario',
-                           'Introduzca el umbral de días para el análisis del inventario de MM: ')
+                           'Introduzca el umbral de días para el análisis del inventario de MM, cómo la determinación del detonante: ')
 if ok == False:
     raise Exception('Cancelar')
 

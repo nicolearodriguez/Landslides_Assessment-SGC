@@ -74,6 +74,13 @@ GeoformasIndicativas, ok = QInputDialog.getItem(None, "Geoformas indicativas de 
 if ok == False:
     raise Exception('Cancelar')
 
+# Pendiente umbral
+slope, ok = QInputDialog.getInt(None, 'Pendiente Umbral',
+                            'Se recomienda como umbral mínimo la inclinación del terreno igual '
+                            'o superior a 45°. Sin embargo, puede introducir la pendiente que considere apropiada para la zona de estudio: ')
+if ok == False:
+    raise Exception('Cancelar')
+
 # #######################Zonificación de Susceptibilidad por zonas de inicio tipo Caida####################### #
 
 # Se determina la ruta de la pendiente
@@ -87,7 +94,7 @@ if ok == False:
 alg="native:reclassifybytable"
 Pendientes = data_path + '/' + Pendiente
 Suscep_Caida_Pendiente = data_path+'/Pre_Proceso/Suscep_Caida_Pendiente.tif'
-table = [0, 45, 0, 45, 100, 5]  # [min1, max1, valor1, min2, max2, valor2]  min<valor<=max
+table = [0, slope, 0, slope, 100, 5]  # [min1, max1, valor1, min2, max2, valor2]  min<valor<=max
 params = {'INPUT_RASTER': Pendientes,'RASTER_BAND': 1,'TABLE': table,'NO_DATA': -9999,'RANGE_BOUNDARIES': 0,
           'NODATA_FOR_MISSING': True,'DATA_TYPE': 5,'OUTPUT': Suscep_Caida_Pendiente}
 processing.run(alg, params)

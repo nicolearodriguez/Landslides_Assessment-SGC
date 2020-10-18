@@ -241,9 +241,9 @@ print('El área bajo la curva es: ', Area_Total)
 # Si el área bajo la curva da menor a 0.7 (70%) se generá un mensaje de advertencia,
 # de lo contrario se generá un mensaje para corroborar que está correcto
 if Area_Total > 0.7:
-    iface.messageBar().pushMessage("Ajuste LSI", 'La función final de susceptibilidad es aceptable', Qgis.Info, 5)
+    iface.messageBar().pushMessage("Ajuste LSI", f'La función final de susceptibilidad es aceptable con un area de {Area_Total}', Qgis.Info, 10)
 else:
-    iface.messageBar().pushMessage("Ajuste LSI", 'La función final de susceptibilidad NO es aceptable', Qgis.Warning, 10)
+    iface.messageBar().pushMessage("Ajuste LSI", f'La función final de susceptibilidad NO es aceptable con un area de {Area_Total}', Qgis.Warning, 10)
 
 # Se identifican los valores Y para asignar el rango de susceptibilidad
 # Alta

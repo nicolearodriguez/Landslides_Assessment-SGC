@@ -96,7 +96,7 @@ Norma, ok = QInputDialog.getItem(None, "Norma de la regresión",
                                  "Seleccione la norma con la que se hará la regresión", Normas, 0, False)
 if ok == False:
     raise Exception('Cancelar')
-    
+ 
 # Se define cómo se quiere hacer la discritización
 Discri = ["Amenaza", "Amenaza - Tipo de movimiento"]
 Discritizacion, ok = QInputDialog.getItem(None, "Discretización",
@@ -409,21 +409,7 @@ for poligono in Poligonos:
             # entonces la pendiente y el corte con Y es igual que con la norma L2
             if len(y) == 2:
                 ml1 = ml2
-            
-            
-            #Dependiendo de la norma de regresión elegida se define los parámetros de la recta
-            if Norma == "L1":
-                Pendiente = ml1[0]
-                print (u'Pendiente "m": ', Pendiente)
-                Intercepto = ml1[1]
-                print (u'Intercepto "b": ', Intercepto)
                 
-            else:
-                Pendiente = ml2[0]
-                print (u'Pendiente "m": ', Pendiente)
-                Intercepto = ml2[1]
-                print (u'Intercepto "b": ', Intercepto)
-            
             # Grafica de la dispersión de los datos y sus rectas correspondientes
             fig, ax = plt.subplots(1, 1, figsize=(12, 7))
             ax.plot(x, y, 'o')
@@ -442,6 +428,20 @@ for poligono in Poligonos:
             ax.legend()
             plt.grid(True)
             plt.show()
+                
+            #Dependiendo de la norma de regresión elegida se define los parámetros de la recta
+            if Norma == "L1":
+                Pendiente = ml1[0]
+                print (u'Pendiente "m": ', Pendiente)
+                Intercepto = ml1[1]
+                print (u'Intercepto "b": ', Intercepto)
+                
+            else:
+                Pendiente = ml2[0]
+                print (u'Pendiente "m": ', Pendiente)
+                Intercepto = ml2[1]
+                print (u'Intercepto "b": ', Intercepto)
+            
             
             #Se guarda la gráfica resultante en formato jpg
             fig.savefig(data_path + f'/Amenaza/{poligono}_{Tipo}_{Cat_amenaza}.jpg')
