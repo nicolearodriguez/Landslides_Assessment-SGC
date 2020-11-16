@@ -15,6 +15,7 @@ from qgis.PyQt.QtCore import QVariant
 from qgis.gui import QgsMessageBar
 from qgis.core import QgsProject
 from osgeo import gdal_array
+from PyQt5 import QtGui
 from os import listdir
 from time import time
 import pandas as pd
@@ -55,16 +56,16 @@ def Wf(factor, Deslizamientos):
     if Deslizamientos.wkbType()== QgsWkbTypes.Point:
         # Se muestrea el id de la caracteristica del factor condicionante en el punto de deslizamiento
         alg = "qgis:rastersampling"
-        output = data_path + f'/Pre_Proceso/Valores{factor}.shp'
+        output = data_path + f'/Curva_Exito/Valores{factor}.shp'
         params = {'INPUT': Deslizamientos, 'RASTERCOPY': rasterfile, 'COLUMN_PREFIX': 'Id_Condici', 'OUTPUT': output}
         processing.run(alg, params)
-        ValoresRaster = QgsVectorLayer(data_path + f'/Pre_Proceso/Valores{factor}.shp', f'Valores{factor}')
+        ValoresRaster = QgsVectorLayer(data_path + f'/Curva_Exito/Valores{factor}.shp', f'Valores{factor}')
     
     else:
         # Análisis de deslizamientos si su geometria es poligonos
         # Interesección de el factor condicionante con el área de deslizamientos
         alg = "gdal:cliprasterbymasklayer"
-        Deslizamiento_Condicion = data_path + f'/Pre_Proceso/Deslizamientos{factor}.tif'
+        Deslizamiento_Condicion = data_path + f'/Curva_Exito/Deslizamientos{factor}.tif'
         params = {'INPUT': rasterfile, 'MASK': Deslizamientos, 'SOURCE_CRS': None,
                   'TARGET_CRS': None, 'NODATA': None, 'ALPHA_BAND': False,
                   'CROP_TO_CUTLINE': True, 'KEEP_RESOLUTION': False, 'SET_RESOLUTION': False, 'X_RESOLUTION': None,
@@ -74,24 +75,24 @@ def Wf(factor, Deslizamientos):
         
         # Estadísticas zonales (número de pixeles por atributo por deslizamiento)
         alg = "native:rasterlayerzonalstats"
-        Estadisticas_Deslizamiento = data_path + f'/Pre_Proceso/Deslizamientos{factor}Estadistica.csv'
+        Estadisticas_Deslizamiento = data_path + f'/Curva_Exito/Deslizamientos{factor}Estadistica.csv'
         params = {'INPUT': Deslizamiento_Condicion, 'BAND': 1, 'ZONES': Deslizamiento_Condicion,
                   'ZONES_BAND': 1, 'REF_LAYER': 0, 'OUTPUT_TABLE': Estadisticas_Deslizamiento}
         processing.run(alg, params)
         
         # Lectura de las estadísticas de la zona de deslizamientos como dataframe
-        Estadisticas_Deslizamiento = data_path + f'/Pre_Proceso/Deslizamientos{factor}Estadistica.csv'
+        Estadisticas_Deslizamiento = data_path + f'/Curva_Exito/Deslizamientos{factor}Estadistica.csv'
         DF_DeslizamientosEstadistica = pd.read_csv(Estadisticas_Deslizamiento, delimiter=",",encoding='latin-1')
     
     # Estadísticas zonales del raster del factor condicionante (número de pixeles por atributo total)
     alg = "native:rasterlayerzonalstats"
-    Estadisticas_Condicionante = data_path + f'/Pre_Proceso/{factor}Estadistica.csv'
+    Estadisticas_Condicionante = data_path + f'/Curva_Exito/{factor}Estadistica.csv'
     params = {'INPUT': rasterfile, 'BAND': 1, 'ZONES': rasterfile,
               'ZONES_BAND': 1, 'REF_LAYER': 0, 'OUTPUT_TABLE': Estadisticas_Condicionante}
     processing.run(alg, params)
     
     # Lectura de las estadísticas de toda la zona como dataframe
-    Estadisticas_Condicionante = data_path + f'/Pre_Proceso/{factor}Estadistica.csv'
+    Estadisticas_Condicionante = data_path + f'/Curva_Exito/{factor}Estadistica.csv'
     DF_Estadistica = pd.read_csv(Estadisticas_Condicionante, encoding='latin-1')
     
     # Valores únicos del factor condicionante
@@ -217,7 +218,7 @@ def Wf(factor, Deslizamientos):
     # Se imprime y se guarda el dataframe de pesos finales para el factor condicionante
     print(f'Los valores de Wf para {factor} es: ')
     print(DF_Susceptibilidad)
-    DF_Susceptibilidad.reset_index().to_csv(data_path + f'/Pre_Proceso/DF_Susceptibilidad_{factor}.csv', header = True, index = False)
+    DF_Susceptibilidad.reset_index().to_csv(data_path + f'/Curva_Exito/DF_Susceptibilidad_{factor}.csv', header = True, index = False)
     
     # Teniendo en cuenta el tipo de factor condicionante se definen los datos para reclasificar la capa
     if factor == 'CurvaturaPlano' or factor == 'Pendiente':
@@ -231,20 +232,20 @@ def Wf(factor, Deslizamientos):
         
     # Reclasificación del raster del factor condicionante con el Wf correspondiente al atributo.
     alg = "native:reclassifybylayer"
-    Susceptibilidad_Condicionante = data_path + f'/Pre_Proceso/DF_Susceptibilidad_{factor}.csv'
-    Condicionante_Reclass = data_path + f'/Resultados/Wf_{factor}.tif'
+    Susceptibilidad_Condicionante = data_path + f'/Curva_Exito/DF_Susceptibilidad_{factor}.csv'
+    Condicionante_Reclass = data_path + f'/Curva_Exito/Wf_{factor}.tif'
     params = {'INPUT_RASTER': rasterfile, 'RASTER_BAND': 1, 'INPUT_TABLE': Susceptibilidad_Condicionante,
               'MIN_FIELD': MIN_FIELD, 'MAX_FIELD': MAX_FIELD, 'VALUE_FIELD': 'Wf', 'NO_DATA': -9999, 'RANGE_BOUNDARIES': RANGE_BOUNDARIES,
               'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5, 'OUTPUT': Condicionante_Reclass}
     processing.run(alg, params)
     
     # Se añade la capa reclasificada con los Wf al lienzo
-    iface.addRasterLayer(data_path + f'/Resultados/Wf_{factor}.tif', f"Wf_{factor}")
+    iface.addRasterLayer(data_path + f'/Curva_Exito/Wf_{factor}.tif', f"Wf_{factor}")
 
 # ############################ SE APLICA EL MÉTODO EN LOS FACTORES CONDICIONANTES DISCRETOS ############################ #
 
 # Se lee el archivo correspondientes a deslizamientos
-Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos.shp')
+Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos_Exito.shp')
 
 # Se listan los factores condicionantes discretos
 Factor_Condicionante = ['UGS', 'SubunidadesGeomorf', 'CoberturaUso', 'CambioCobertura']

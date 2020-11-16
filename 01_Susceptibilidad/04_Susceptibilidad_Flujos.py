@@ -135,9 +135,28 @@ QMessageBox.information(iface.mainWindow(), "Categorías de susceptibilidad seg�
                         'dónde puede cambiar en la columna "Valor" la categoría de susceptibilidad teniendo en cuenta que 0: Baja, 1: Media y 2: Alta, '
                         'haga el ajuste y guarde ANTES de dar "Aceptar", si está de acuerdo con las categorías puede continuar')
 
+# Se define el raster de las subunidades geomorfologicas
+Factor_Condicionante = data_path + '/Pre_Proceso/SubunidadesGeomorf.tif'
+
+# Se corta según la zona de estudio
+if os.path.isfile(data_path + '/Pre_Proceso/Zona_Estudio.shp') is True:
+    Zona_Estudio = QgsVectorLayer(data_path + '/Pre_Proceso/Zona_Estudio.shp', 'Zona_Estudio')
+    
+    # Se corta la capa de la suma según la zona de estudio
+    alg = "gdal:cliprasterbymasklayer"
+    Subunidades = data_path + '/Pre_Proceso/SubunidadesGeomorf.tif'
+    Subunidades_Ajustada = data_path + '/Pre_Proceso/SubunidadesGeomorf_Ajustada.tif'
+    params = {'INPUT': Subunidades, 'MASK': Zona_Estudio, 'SOURCE_CRS': None,
+    'TARGET_CRS': None, 'NODATA': None, 'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True,
+    'KEEP_RESOLUTION': False, 'SET_RESOLUTION': False, 'X_RESOLUTION': None, 'Y_RESOLUTION': None,
+    'MULTITHREADING': False, 'OPTIONS': '', 'DATA_TYPE': 0, 'EXTRA': '', 'OUTPUT': Subunidades_Ajustada}
+    processing.run(alg, params)
+    
+    # Se redefine la capa raster para el procedimiento
+    Factor_Condicionante = data_path + '/Pre_Proceso/SubunidadesGeomorf_Ajustada.tif'
+
 #Reclasificación del raster con el valor de Susceptibilidad correspondiente.
 alg="native:reclassifybylayer"
-Factor_Condicionante = data_path + '/Pre_Proceso/SubunidadesGeomorf.tif'
 DF_SubunidadesGeomorf = data_path+'/Pre_Proceso/DF_RasterFlujo_SubunidadesGeoform.csv'
 Susceptibilidad_Flujo = data_path + '/Resultados/Susceptibilidad_Flujo.tif'
 params={'INPUT_RASTER': Factor_Condicionante, 'RASTER_BAND': 1, 'INPUT_TABLE': DF_SubunidadesGeomorf, 'MIN_FIELD': 'ID',
@@ -145,8 +164,18 @@ params={'INPUT_RASTER': Factor_Condicionante, 'RASTER_BAND': 1, 'INPUT_TABLE': D
         'OUTPUT': Susceptibilidad_Flujo}
 processing.run(alg,params)
 
-Susceptibilidad_Flujo = QgsRasterLayer(Susceptibilidad_Flujo,"Susceptibilidad_Flujo")
-QgsProject.instance().addMapLayer(Susceptibilidad_Flujo)
+# Se agrega la capa reclasificada con los rangos de susceptibilidad
+Susceptibilidad = iface.addRasterLayer(data_path + '/Resultados/Susceptibilidad_Flujo.tif', "Susceptibilidad_Flujo")
+
+# Se cambia la simbología de la capa de susceptibilidad
+fnc = QgsColorRampShader()
+fnc.setColorRampType(QgsColorRampShader.Interpolated)
+lst = [QgsColorRampShader.ColorRampItem(0, QtGui.QColor('#36b449'), 'Baja'),QgsColorRampShader.ColorRampItem(1, QtGui.QColor('#d4e301'), 'Media'),QgsColorRampShader.ColorRampItem(2, QtGui.QColor('#dc7d0f'), 'Alta')]
+fnc.setColorRampItemList(lst)
+shader = QgsRasterShader()
+shader.setRasterShaderFunction(fnc)
+renderer = QgsSingleBandPseudoColorRenderer(Susceptibilidad.dataProvider(), 1, shader)
+Susceptibilidad.setRenderer(renderer)
 
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
 elapsed_time = time() - start_time

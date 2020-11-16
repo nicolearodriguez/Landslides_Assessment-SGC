@@ -55,7 +55,7 @@ DF_Final = pd.DataFrame()
 
 #Se determinan el número de grupos de MM
 Cluster = DF_Inv['CLUSTER_ID'].unique()
-Cluster = pd.DataFrame(Cluster, columns=['Cluster'],dtype=object)
+Cluster = pd.DataFrame(Cluster, columns = ['Cluster'], dtype = object)
 
 # Se recorre los valores de grupos de cluster
 for grupo in range (0, len(Cluster)):
@@ -71,14 +71,14 @@ for grupo in range (0, len(Cluster)):
     print('\n')
     
     # Se pone como indice la columna del cluster
-    DF_Inv.set_index('CLUSTER_ID', inplace=True)
+    DF_Inv.set_index('CLUSTER_ID', inplace = True)
     DF_Inv_Cluster = DF_Inv.loc[Cluster_id] # Se extraen los MM correspondientes a ese cluster
-    DF_Inv_Cluster.reset_index(level=0, inplace=True)
-    DF_Inv.reset_index(level=0, inplace=True)
+    DF_Inv_Cluster.reset_index(level = 0, inplace = True)
+    DF_Inv.reset_index(level = 0, inplace = True)
 
     #Se extraen los tipos de movimientos en masa
     Tipo_Evento = DF_Inv_Cluster['TIPO_MOV1'].unique()
-    Tipo_Evento = pd.DataFrame(Tipo_Evento, columns=['Tipo_Mov'],dtype=object)
+    Tipo_Evento = pd.DataFrame(Tipo_Evento, columns = ['Tipo_Mov'], dtype = object)
     
     # Si la descretización es solo por amenaza la extensión del for solo será de 1
     if Discritizacion == "Amenaza": Tipo_Evento = [1]
@@ -100,11 +100,11 @@ for grupo in range (0, len(Cluster)):
             print('\n')
             
             # Se pone como indice la columna de tipo de movimiento
-            DF_Inv_Cluster.set_index('TIPO_MOV1', inplace=True)
+            DF_Inv_Cluster.set_index('TIPO_MOV1', inplace = True)
             # Se selecciona del inventario resultante anteriormente solo los del tipo en cuestión
             DF_Inv_Tipo = DF_Inv_Cluster.loc[Tipo]
-            DF_Inv_Tipo.reset_index(level=0, inplace=True)
-            DF_Inv_Cluster.reset_index(level=0, inplace=True)
+            DF_Inv_Tipo.reset_index(level = 0, inplace = True)
+            DF_Inv_Cluster.reset_index(level = 0, inplace = True)
             
             # Según el tipo de movimiento en masa se define la categoría de susceptibilidad para el análisis
             if Tipo == "Deslizamiento":

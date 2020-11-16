@@ -46,7 +46,9 @@ QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
                         'que este genera para evitar conflictos al reemplazar los archivos pre-existentes en especial los .shp')
 QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
                         'Es necesario que todos los tipos de deslizamiento estén unificados en un solo tipo, de igual forma con las caidas')
-
+QMessageBox.information(iface.mainWindow(), "!Tenga en cuenta!",
+                        'Se recomienda que todos los insumos esten en el mismo sistema coordenado, y en coordenadas planas ')
+                        
 # Se determinan los archivos con extensión .shp en la ruta
 shape = []
 for i in list:
@@ -71,6 +73,12 @@ if os.path.isdir(data_path + '/Resultados') is False:
     
 if os.path.isdir(data_path + '/Amenaza') is False:
     os.mkdir(data_path + '/Amenaza')
+    
+if os.path.isdir(data_path + '/Curva_Exito') is False:
+    os.mkdir(data_path + '/Curva_Exito')
+
+if os.path.isdir(data_path + '/Curva_Validacion') is False:
+    os.mkdir(data_path + '/Curva_Validacion')
 
 # Se piden las entradas necesarias para la ejecución: 
 # Capas vectoriales de los factores condicionante
@@ -177,11 +185,24 @@ Reptacion, ok = QInputDialog.getItem(
 if ok == False:
     raise Exception('Cancelar')
 
+# Se define si se hará curva de validación o unicamente curva de éxito
+MM_Exito, ok = QInputDialog.getInt(
+    None, 'Porcentaje de deslizamientos', 'Introduzca el porcentaje de deslizamientos para el análisis de la curva de éxito. Si no se quiere hacer curva de validación, el porcentaje correspondería a 100 (%)')
+if ok == False:
+    raise Exception('Cancelar')
+
 # Dimensiones del pixel
 cellsize, ok = QInputDialog.getDouble(
     None, 'Tamaño del pixel', 'Introduzca el tamaño del pixel: ')
 if ok == False:
     raise Exception('Cancelar')
+    
+# Zona de estudio
+Zona_Estudio, ok = QInputDialog.getItem(None, "Zona de estudio",
+                                           "Si tiene una zona de estudio determinada, seleccione el archivo shape del polígono", shape, 0, False)
+if ok == False:
+    raise Exception('Cancelar')
+Ruta_Zona_Estudio = data_path + '/' + Zona_Estudio
 
 # ##################################### Factores Condicionantes ##################################### #
 
@@ -452,7 +473,6 @@ elif os.path.isfile(Ruta_Mov_Masa_Puntos) is True:
     Reptacion_puntos = data_path+'/Pre_Proceso/Reptacion_puntos.shp'
     QgsVectorFileWriter.writeAsVectorFormat(Mov_Masa_Puntos, Reptacion_puntos, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
     
-    
     # Si no hay un mapa de poligonos entonces el mapa de puntos se guarda como movimientos
     Mov_Masa_Puntos = QgsVectorLayer(Ruta_Mov_Masa_Puntos, 'Mov_Masa_Puntos')
     Mov_Masa = data_path + '/Pre_Proceso/Mov_Masa.shp'
@@ -463,8 +483,42 @@ else:
     # Si no hay mapas de ningún tipo se genera un aviso porque es necesario
     iface.messageBar().pushMessage("Movimientos en masa", 'No hay archivo de movimientos en masa', Qgis.Warning, 10)
 
+# Según el análisis se dividen y exportan los deslizamientos para el respectivo análisis
+if os.path.isfile(data_path + '/Pre_Proceso/Deslizamientos.shp') is True:
+    
+    if MM_Exito == 100:
+        Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos.shp', 'Deslizamientos')
+        Deslizamientos_Exito = data_path + '/Pre_Proceso/Deslizamientos_Exito.shp'
+        CRS = Deslizamientos.crs().authid()
+        QgsVectorFileWriter.writeAsVectorFormat(Deslizamientos, Deslizamientos_Exito, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile")
+        
+    else:
+        # Se seleccionan aleatoriamente los deslizamientos para el análisis de éxito y validación
+        Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos.shp')
+        alg = "qgis:randomselection"
+        params = {'INPUT': Deslizamientos,'METHOD': 1,'NUMBER': MM_Exito}
+        processing.run(alg, params)
+        
+        # Se guarda la selección de deslizamientos para análisis de éxito
+        Deslizamientos_Exito = data_path + '/Pre_Proceso/Deslizamientos_Exito.shp'
+        CRS = Deslizamientos.crs().authid()
+        QgsVectorFileWriter.writeAsVectorFormat(Deslizamientos, Deslizamientos_Exito, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile", onlySelected=True)
+        
+        # Se obtiene la diferencia para obtener los deslizamientos de validación
+        Deslizamientos = data_path + '/Pre_Proceso/Deslizamientos.shp'
+        Deslizamientos_Exito = data_path + '/Pre_Proceso/Deslizamientos_Exito.shp'
+        Deslizamientos_Validacion = data_path + '/Pre_Proceso/Deslizamientos_Validacion.shp'
+        alg = "native:difference"
+        params = {'INPUT': Deslizamientos, 'OVERLAY': Deslizamientos_Exito, 'OUTPUT': Deslizamientos_Validacion}
+        processing.run(alg, params)
+        
+# Se guarda la zona de estudio para su posterior uso
+if os.path.isfile(Ruta_Zona_Estudio) is True:
+    Zona_Estudio = QgsVectorLayer(Ruta_Zona_Estudio, 'Zona_Estudio')
+    Zona_Estudio_Export = data_path + '/Pre_Proceso/Zona_Estudio.shp'
+    CRS = Zona_Estudio.crs().authid()
+    QgsVectorFileWriter.writeAsVectorFormat(Zona_Estudio, Zona_Estudio_Export, "utf-8", QgsCoordinateReferenceSystem(CRS), "ESRI Shapefile")
+    
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
 elapsed_time = time() - start_time
 print("Elapsed time: %0.10f seconds." % elapsed_time)
-    
-

@@ -62,7 +62,7 @@ if ok == False:
     raise Exception('Cancelar')
 Ruta_Zona_Deposito = data_path + '/' + Zona_Deposito
 
-# Se determinan los archivos con extensión .shp en la ruta
+# Se determinan los archivos con extensión .csv en la ruta
 csv = []
 for i in list:
     if i[-4:] == '.csv':
@@ -238,7 +238,7 @@ Suscep_Caida_UGS = QgsRasterLayer(data_path + '/Pre_Proceso/Suscep_Caida_UGS.tif
 QgsProject.instance().addMapLayer(Suscep_Caida_UGS)
 
 # Dirección del resultado de la suma de los valores de susceptibilidad
-Output = data_path + '/Pre_Proceso/Susceptibilidad_Caida_Pre.tif'
+Resultados_Caida = data_path + '/Pre_Proceso/Susceptibilidad_Caida_Pre.tif'
     
 # Sumatoria de los raster
 alg = "qgis:rastercalculator"
@@ -250,12 +250,28 @@ ymin = extents.yMinimum()
 ymax = extents.yMaximum()
 params = {'EXPRESSION': Expresion, 'LAYERS': [Suscep_Caida_UGS],
          'CELLSIZE':0, 'EXTENT': "%f,%f,%f,%f"% (xmin, xmax, ymin, ymax),
-         'CRS': None,'OUTPUT': Output}
+         'CRS': None,'OUTPUT': Resultados_Caida}
 processing.run(alg,params)
+
+# Se corta según la zona de estudio
+if os.path.isfile(data_path + '/Pre_Proceso/Zona_Estudio.shp') is True:
+    Zona_Estudio = QgsVectorLayer(data_path + '/Pre_Proceso/Zona_Estudio.shp', 'Zona_Estudio')
+    
+    # Se corta la capa de la suma según la zona de estudio
+    alg = "gdal:cliprasterbymasklayer"
+    Suma = data_path + '/Pre_Proceso/Susceptibilidad_Caida_Pre.tif'
+    Suma_Ajustada = data_path + '/Pre_Proceso/Susceptibilidad_Caida_Pre_Ajustada.tif'
+    params = {'INPUT': Suma, 'MASK': Zona_Estudio, 'SOURCE_CRS': None,
+    'TARGET_CRS': None, 'NODATA': None, 'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True,
+    'KEEP_RESOLUTION': False, 'SET_RESOLUTION': False, 'X_RESOLUTION': None, 'Y_RESOLUTION': None,
+    'MULTITHREADING': False, 'OPTIONS': '', 'DATA_TYPE': 0, 'EXTRA': '', 'OUTPUT': Suma_Ajustada}
+    processing.run(alg, params)
+    
+    # Se redefine la capa raster para el procedimiento
+    Resultados_Caida = data_path + '/Pre_Proceso/Susceptibilidad_Caida_Pre_Ajustada.tif'
 
 #Se reclasifica teniendo en cuenta que 1 será susceptibilidad baja, 2 media y 4 alta.
 alg = "native:reclassifybytable"
-Resultados_Caida = data_path + '/Pre_Proceso/Susceptibilidad_Caida_Pre.tif'
 Susceptibilidad_Caida = data_path + '/Resultados/Susceptibilidad_Inicio_Caida.tif'
 table = [0, 7, 1, 8, 10, 2, 11, 12, 4]  #[min1, max1, valor1, min2, max2, valor2, min3, max3, valor3] min <= valor <= max
 params = {'INPUT_RASTER': Resultados_Caida, 'RASTER_BAND': 1, 'TABLE': table, 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 2,
@@ -325,9 +341,18 @@ params={'INPUT_RASTER': Resultados_Caida, 'RASTER_BAND': 1, 'TABLE': table, 'NO_
            'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5, 'OUTPUT': Susceptibilidad_Caida}
 processing.run(alg, params)
 
-# Se añade al lienzo la susceptibilidad final
-Susceptibilidad_Caida = QgsRasterLayer(Susceptibilidad_Caida, "Susceptibilidad_Caida")
-QgsProject.instance().addMapLayer(Susceptibilidad_Caida)
+# Se agrega la capa reclasificada con los rangos de susceptibilidad
+Susceptibilidad = iface.addRasterLayer(data_path + '/Resultados/Susceptibilidad_Caida.tif', "Susceptibilidad_Caida")
+
+# Se cambia la simbología de la capa de susceptibilidad
+fnc = QgsColorRampShader()
+fnc.setColorRampType(QgsColorRampShader.Interpolated)
+lst = [QgsColorRampShader.ColorRampItem(0, QtGui.QColor('#36b449'), 'Baja'),QgsColorRampShader.ColorRampItem(1, QtGui.QColor('#d4e301'), 'Media'),QgsColorRampShader.ColorRampItem(2, QtGui.QColor('#dc7d0f'), 'Alta')]
+fnc.setColorRampItemList(lst)
+shader = QgsRasterShader()
+shader.setRasterShaderFunction(fnc)
+renderer = QgsSingleBandPseudoColorRenderer(Susceptibilidad.dataProvider(), 1, shader)
+Susceptibilidad.setRenderer(renderer)
 
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
 elapsed_time = time() - start_time

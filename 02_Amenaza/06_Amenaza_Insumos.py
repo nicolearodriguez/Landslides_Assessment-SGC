@@ -49,7 +49,7 @@ shape.append('None')
 
 # Sistema de referencia de coordenadas
 SRC_Destino, ok = QInputDialog.getText(None, 'SRC', 'Introduzca el ID del sistema de referencia de coordenadas '
-                                       'PLANAS para la reproyección de las capas necesarias, Ejm= EPSG:3116')
+                                       'PLANAS en el cuál se introdujeron los insumos, Ejm= EPSG:3116')
 if ok == False:
     raise Exception('Cancelar')
 
@@ -162,7 +162,7 @@ if ok == False:
 Susceptibilidad_Deslizamientos = QgsRasterLayer(data_path + '/Resultados/Susceptibilidad_Deslizamientos.tif',
                                                 "Susceptibilidad_Deslizamientos")
 
-############################## PREPARACIÓN DE MOVIMIENTOS ##############################
+# ############################# PREPARACIÓN DE MOVIMIENTOS ############################# #
 
 # Se reproyecta la capa a coordenadas planas
 alg = "native:reprojectlayer"

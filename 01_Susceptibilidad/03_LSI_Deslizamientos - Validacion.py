@@ -14,6 +14,7 @@ from qgis.PyQt.QtCore import QVariant
 from qgis.core import QgsProject
 import matplotlib.pyplot as plt
 from osgeo import gdal_array
+from PyQt5 import QtGui
 from time import time
 import pandas as pd
 import numpy as np
@@ -40,36 +41,52 @@ cellsize, ok = QInputDialog.getDouble(
     None, 'Tamaño del pixel', 'Introduzca el tamaño del pixel: ')
 if ok == False:
     raise Exception('Cancelar')
+    
+# Valores de reclasificación
+suscep_alta, ok = QInputDialog.getInt(
+    None, 'Reclasificación de susceptibilidad alta', 'Introduzca el porcentaje para la reclasificación de la susceptibilidad alta en la curva de éxito, la metodología recomienda 75 (%): ')
+if ok == False:
+    raise Exception('Cancelar')
+
+suscep_alta = suscep_alta/100
+
+# Valores de reclasificación
+suscep_media, ok = QInputDialog.getInt(
+    None, 'Reclasificación de susceptibilidad media', 'Introduzca el porcentaje para la reclasificación de la susceptibilidad media en la curva de éxito, la metodología recomienda 98 (%): ')
+if ok == False:
+    raise Exception('Cancelar')
+
+suscep_media = suscep_media/100
 
 # Capas raster reclasificadas con su respectivo Wf
 
 # Pendiente
-Ruta_Pendiente = data_path + '/Resultados/Wf_Pendiente.tif'
+Ruta_Pendiente = data_path + '/Curva_Validacion/Wf_Pendiente.tif'
 Wf_Pendiente = QgsRasterLayer(Ruta_Pendiente, "Wf_Pendiente")
 QgsProject.instance().addMapLayer(Wf_Pendiente)
 
 # Subunidades geomorfologicas
-Ruta_SubunidadesGeomorf = data_path + '/Resultados/Wf_SubunidadesGeomorf.tif'
+Ruta_SubunidadesGeomorf = data_path + '/Curva_Validacion/Wf_SubunidadesGeomorf.tif'
 Wf_SubunidadesGeomorf = QgsRasterLayer(Ruta_SubunidadesGeomorf, "Wf_SubunidadesGeomorf")
 QgsProject.instance().addMapLayer(Wf_SubunidadesGeomorf)
 
 # Unidades geologicas superficiales
-Ruta_UGS = data_path + '/Resultados/Wf_UGS.tif'
+Ruta_UGS = data_path + '/Curva_Validacion/Wf_UGS.tif'
 Wf_UGS = QgsRasterLayer(Ruta_UGS, "Wf_UGS")
 QgsProject.instance().addMapLayer(Wf_UGS)
 
 # Cobertura y uso
-Ruta_CoberturaUso = data_path + '/Resultados/Wf_CoberturaUso.tif'
+Ruta_CoberturaUso = data_path + '/Curva_Validacion/Wf_CoberturaUso.tif'
 Wf_CoberturaUso = QgsRasterLayer(Ruta_CoberturaUso, "Wf_CoberturaUso")
 QgsProject.instance().addMapLayer(Wf_CoberturaUso)
 
 # Curvatura plana
-Ruta_CurvaturaPlano = data_path + '/Resultados/Wf_CurvaturaPlano.tif'
+Ruta_CurvaturaPlano = data_path + '/Curva_Validacion/Wf_CurvaturaPlano.tif'
 Wf_CurvaturaPlano = QgsRasterLayer(Ruta_CurvaturaPlano, "Wf_CurvaturaPlano")
 QgsProject.instance().addMapLayer(Wf_CurvaturaPlano)
 
 # Cambio de cobertura
-Ruta_CambioCobertura = data_path + '/Resultados/Wf_CambioCobertura.tif'
+Ruta_CambioCobertura = data_path + '/Curva_Validacion/Wf_CambioCobertura.tif'
 
 if os.path.isfile(Ruta_CambioCobertura) is True:
     # Si el archivo existe se tiene en cuenta en la suma
@@ -82,7 +99,7 @@ else:
     Expresion = '\"Wf_CoberturaUso@1\" + \"Wf_CurvaturaPlano@1\" + \"Wf_SubunidadesGeomorf@1\" + \"Wf_Pendiente@1\" + \"Wf_UGS@1\"'
 
 # Dirección del resultado de la suma de los Wf
-Output = data_path + '/Resultados/LSI.tif'
+Output = data_path + '/Curva_Validacion/Suma_LSI.tif'
 
 # Sumatoria de los raster
 alg = "qgis:rastercalculator"
@@ -95,33 +112,50 @@ params = {'EXPRESSION': Expresion, 'LAYERS': [Wf_CurvaturaPlano], 'CELLSIZE': ce
           'EXTENT': "%f,%f,%f,%f" % (xmin, xmax, ymin, ymax), 'CRS': None, 'OUTPUT': Output}
 processing.run(alg, params)
 
+# Se define el archivo raster para el procedimiento
+rasterfile = data_path + '/Curva_Validacion/Suma_LSI.tif'
+
+# Se corta según la zona de estudio
+if os.path.isfile(data_path + '/Pre_Proceso/Zona_Estudio.shp') is True:
+    Zona_Estudio = QgsVectorLayer(data_path + '/Pre_Proceso/Zona_Estudio.shp', 'Zona_Estudio')
+    
+    # Se corta la capa LSI según la zona de estudio
+    alg = "gdal:cliprasterbymasklayer"
+    Capa_LSI = rasterfile
+    Capa_LSI_Ajustada = data_path + '/Curva_Validacion/LSI.tif'
+    params = {'INPUT': Capa_LSI, 'MASK': Zona_Estudio, 'SOURCE_CRS': None,
+    'TARGET_CRS': None, 'NODATA': None, 'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True,
+    'KEEP_RESOLUTION': False, 'SET_RESOLUTION': False, 'X_RESOLUTION': None, 'Y_RESOLUTION': None,
+    'MULTITHREADING': False, 'OPTIONS': '', 'DATA_TYPE': 0, 'EXTRA': '', 'OUTPUT': Capa_LSI_Ajustada}
+    processing.run(alg, params)
+    
+    # Se redefine la capa raster para el procedimiento
+    rasterfile = data_path + '/Curva_Validacion/LSI.tif'
+
 # Se agrega la capa raster LSI al lienzo
-LSI = QgsRasterLayer(data_path + '/Resultados/LSI.tif', "LSI")
+LSI = QgsRasterLayer(rasterfile, "LSI")
 QgsProject.instance().addMapLayer(LSI)
 
-# Se define el archivo raster para el procedimiento
-rasterfile = data_path + '/Resultados/LSI.tif'
-
 # Se lee el archivo correspondientes a deslizamientos
-Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos.shp')
+Deslizamientos = QgsVectorLayer(data_path + '/Pre_Proceso/Deslizamientos_Validacion.shp')
 
 # Dependiendo de la geometría de los deslizamientos se hace el procedimiento
 
 if Deslizamientos.wkbType() == QgsWkbTypes.Point:
     # Obtenermos el id de la caracteristica del punto de deslizamiento
     alg = "qgis:rastersampling"
-    output = data_path+'/Pre_Proceso/ValoresLSI.shp'
+    output = data_path+'/Curva_Validacion/ValoresLSI.shp'
     params = {'INPUT': Deslizamientos, 'RASTERCOPY': rasterfile, 'COLUMN_PREFIX': 'Id_Condici', 'OUTPUT': output}
     processing.run(alg, params)
     
     # Valores LSI en los puntos de deslizamiento
-    ValoresRaster = QgsVectorLayer(data_path + '/Pre_Proceso/ValoresLSI.shp', 'ValoresLSI')
+    ValoresRaster = QgsVectorLayer(data_path + '/Curva_Validacion/ValoresLSI.shp', 'ValoresLSI')
 else:
     # Se hace la interesección de el factor condicionante con el área de deslizamientos
     # Obteniendo así los atributos correspondintes a deslizamientos 
     alg = "gdal:cliprasterbymasklayer"
     Factor_Condicionante = rasterfile
-    Deslizamiento_Condicion = data_path + '/Pre_Proceso/DeslizamientosLSI.tif'
+    Deslizamiento_Condicion = data_path + '/Curva_Validacion/DeslizamientosLSI.tif'
     params = {'INPUT': Factor_Condicionante, 'MASK': Deslizamientos, 'SOURCE_CRS': None,
     'TARGET_CRS': None, 'NODATA': None, 'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True,
     'KEEP_RESOLUTION': False, 'SET_RESOLUTION': False, 'X_RESOLUTION': None, 'Y_RESOLUTION': None, 'MULTITHREADING': False,
@@ -130,24 +164,24 @@ else:
     
     # Se obtienen las estadísticas zonales de la capa en cuestión (número de pixeles por atributo por deslizamiento)
     alg = "native:rasterlayerzonalstats"
-    Estadisticas_Deslizamiento = data_path + '/Pre_Proceso/DeslizamientosLSIEstadistica.csv'
+    Estadisticas_Deslizamiento = data_path + '/Curva_Validacion/DeslizamientosLSIEstadistica.csv'
     params = {'INPUT': Deslizamiento_Condicion, 'BAND': 1, 'ZONES': Deslizamiento_Condicion, 'ZONES_BAND': 1,
               'REF_LAYER': 0, 'OUTPUT_TABLE': Estadisticas_Deslizamiento}
     processing.run(alg, params)
     
     # Lectura de las estadísticas de la zona de deslizamientos como dataframe
-    Estadisticas_Deslizamiento = data_path + '/Pre_Proceso/DeslizamientosLSIEstadistica.csv'
+    Estadisticas_Deslizamiento = data_path + '/Curva_Validacion/DeslizamientosLSIEstadistica.csv'
     DF_DeslizamientosEstadistica = pd.read_csv(Estadisticas_Deslizamiento, delimiter=",", encoding = 'latin-1')
 
 # Se obtienen las estadísticas zonales de los resultados LSI.
 alg = "native:rasterlayerzonalstats"
-output = data_path + '/Pre_Proceso/LSIEstadistica.csv'
+output = data_path + '/Curva_Validacion/LSIEstadistica.csv'
 params = {'INPUT': rasterfile, 'BAND': 1, 'ZONES': rasterfile, 'ZONES_BAND': 1, 'REF_LAYER': 0, 'OUTPUT_TABLE': output}
 processing.run(alg, params)
 
 # Se cargan los archivos necesario para el proceso
 # Valores unicos del factor condicionante
-FILE_NAME = data_path + '/Pre_Proceso/LSIEstadistica.csv'
+FILE_NAME = data_path + '/Curva_Validacion/LSIEstadistica.csv'
 DF_LSIEstadistica = pd.read_csv(FILE_NAME, encoding = 'latin-1')
 atributos = DF_LSIEstadistica["zone"].unique()
 df = pd.DataFrame(atributos)
@@ -172,6 +206,7 @@ df = pd.DataFrame(flat_list)
 df = df.drop(df[df[0] < -100].index) #LSI_Min
 df = df.drop(df[df[0] > 100].index) #LSI_Max
 df = df.dropna(axis=0, subset=[0])
+df = df.rename(columns={0 : 'LSI'})
 
 # Se crea el dataframe para realizar el proceso de la curva LSI
 DF_Susceptibilidad = pd.DataFrame(columns=['LSI_Min', 'LSI_Max', 'PIXLsi', 'PIXDesliz', 'PIXLsiAcum',
@@ -191,11 +226,11 @@ DF_Susceptibilidad.loc[0, 'Y'] = 0
 n_percentil = sorted(range(101), reverse=True)
 
 #Se calcula el percentil cada 1 %
-percentiles = [np.percentile(df[0], 100) + 0.001]
+percentiles = [np.percentile(df['LSI'], 100) + 0.001]
 for i in range(1, len(n_percentil)-1):
-    Valor = np.percentile(df[0], n_percentil[i])
+    Valor = np.percentile(df['LSI'], n_percentil[i])
     percentiles.append(Valor)
-percentiles.append(np.percentile(df[0], 0) - 0.001)
+percentiles.append(np.percentile(df['LSI'], 0) - 0.001)
 
 # Se cuenta los números de pixeles para cada rango
 for i in range(1, len(percentiles)):
@@ -247,30 +282,30 @@ else:
 
 # Se identifican los valores Y para asignar el rango de susceptibilidad
 # Alta
-DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] <= 0.75)].index, 'Categoria'] = 2
-DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] <= 0.75)].index, 'Susceptibilidad'] = 'Alta'
+DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] <= suscep_alta)].index, 'Categoria'] = 2
+DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] <= suscep_alta)].index, 'Susceptibilidad'] = 'Alta'
 # Media
-DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > 0.75) & (DF_Susceptibilidad['Y'] <= 0.98)].index, 'Categoria'] = 1
-DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > 0.75) & (DF_Susceptibilidad['Y'] <= 0.98)].index, 'Susceptibilidad'] = 'Media'
+DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > suscep_alta) & (DF_Susceptibilidad['Y'] <= suscep_media)].index, 'Categoria'] = 1
+DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > suscep_alta) & (DF_Susceptibilidad['Y'] <= suscep_media)].index, 'Susceptibilidad'] = 'Media'
 # Baja
-DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > 0.98)].index, 'Categoria'] = 0
-DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > 0.98)].index, 'Susceptibilidad'] = 'Baja'
+DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > suscep_media)].index, 'Categoria'] = 0
+DF_Susceptibilidad.loc[DF_Susceptibilidad.loc[(DF_Susceptibilidad['Y'] > suscep_media)].index, 'Susceptibilidad'] = 'Baja'
 
 # Se imprime la tabla y se guarda como archivo CSV
 print(DF_Susceptibilidad)
-DF_Susceptibilidad.reset_index().to_csv(data_path + '/Pre_Proceso/DF_LSI.csv', header=True, index=False)
+DF_Susceptibilidad.reset_index().to_csv(data_path + '/Curva_Validacion/DF_LSI.csv', header=True, index=False)
 
 # Extracción de los valores para la curva de éxito.
 x = DF_Susceptibilidad['X']
 y = DF_Susceptibilidad['Y']
 # Se hace las espacialización de los valores
 fig, ax = plt.subplots()
-ax.plot(x, y, color='black', label = "Success curve")
+ax.plot(x, y, color = 'black', label = "Validation curve")
 # Se hacen las líneas correspondientes para clasificar la susceptibilidad
-y1 = 0.75
-ax.axhline(y1, lw = 0.5, alpha = 0.7, linestyle = "--", label = "Y=0.75", color = 'orangered')
-y2 = 0.98
-ax.axhline(y2, lw = 0.5, alpha = 0.7, linestyle = "--", label = "Y=0.98", color = 'green')
+y1 = suscep_alta
+ax.axhline(y1, lw = 0.5, alpha = 0.7, linestyle = "--", label = f"Y = {suscep_alta}", color = 'orangered')
+y2 = suscep_media
+ax.axhline(y2, lw = 0.5, alpha = 0.7, linestyle = "--", label = f"Y = {suscep_media}", color = 'green')
 plt.legend(loc = 'upper left')
 # Se colorean los rangos de susceptibilidad
 ax.fill_between(x, y, where= (y < y1), facecolor = 'orange', edgecolor = 'orangered', linewidth = 3, alpha = 0.5)
@@ -279,23 +314,9 @@ ax.fill_between(x, y, where= (y >= y2), facecolor = 'green', edgecolor = 'green'
 # Se aplican los nombres de los ejes y título
 ax.set_xlabel("PORCENTAJE DE LA ZONA DE ESTUDIO")
 ax.set_ylabel("PORCENTAJE DE LA ZONA DE DESLIZAMIENTOS")
-ax.set_title('CURVA DE ÉXITO', pad = 20, fontdict = {'fontsize': 20, 'color': '#4873ab'})
+ax.set_title('CURVA DE VALIDACIÓN', pad = 20, fontdict = {'fontsize': 20, 'color': '#4873ab'})
 plt.show()  # Se muestra la gráfica
-fig.savefig(data_path+'/Resultados/Curva_Exito.jpg')  # Se guarda la gráfica en formato .jpg
-
-# Reclasificación del mapa raster
-alg = "native:reclassifybylayer"
-RasterReclass = rasterfile
-Tabla = data_path + '/Pre_Proceso/DF_LSI.csv'
-Salida = data_path + '/Resultados/Susceptibilidad_Deslizamientos.tif'
-params = {
-    'INPUT_RASTER': RasterReclass, 'RASTER_BAND': 1, 'INPUT_TABLE': Tabla, 'MIN_FIELD': 'LSI_Min',
-    'MAX_FIELD': 'LSI_Max', 'VALUE_FIELD': 'Categoria', 'NO_DATA': -9999, 'RANGE_BOUNDARIES': 1,
-    'NODATA_FOR_MISSING': True, 'DATA_TYPE': 5, 'OUTPUT': Salida}
-processing.run(alg, params)
-
-# Se agrega la capa reclasificada con los rangos de susceptibilidad
-iface.addRasterLayer(data_path + '/Resultados/Susceptibilidad_Deslizamientos.tif', "Susceptibilidad_Deslizamientos")
+fig.savefig(data_path+'/Curva_Validacion/Curva_Exito.jpg')  # Se guarda la gráfica en formato .jpg
 
 # Se imprime el tiempo en el que se llevo a cambo la ejecución del algoritmo
 elapsed_time = time() - start_time

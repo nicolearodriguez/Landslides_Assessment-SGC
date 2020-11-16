@@ -155,10 +155,10 @@ for poligono in Poligonos:
         continue
     
     # Se pone como indice la columna de los poligonos
-    DF_Inv.set_index('Poli_Voron', inplace=True)
+    DF_Inv.set_index('Poli_Voron', inplace = True)
     DF_Inv_Poligono = DF_Inv.loc[poligono] # Se extraen los MM correspondientes a ese poligono
-    DF_Inv_Poligono.reset_index(level=0, inplace=True)
-    DF_Inv.reset_index(level=0, inplace=True)
+    DF_Inv_Poligono.reset_index(level = 0, inplace = True)
+    DF_Inv.reset_index(level = 0, inplace = True)
     
     # Se define la estación correspondiente al poligono
     Estacion = DF_Poligonos.loc[poligono]['Codigo']

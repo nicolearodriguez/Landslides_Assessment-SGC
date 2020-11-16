@@ -5,7 +5,8 @@
 
 """
 En esta programación se hace el análisis el análisis final de susceptibilidad
-por movimientos en masa en general
+por movimientos en masa en general, dónde se combinan las susceptibilidades 
+anteriores de deslizamiento, caída y flujo, y se sobreponen la reptación.
 """
 
 from PyQt5.QtWidgets import QInputDialog
