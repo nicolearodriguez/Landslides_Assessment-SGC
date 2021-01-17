@@ -1,0 +1,272 @@
+AMBIENTE GEOMORFOLOGICO;UNIDAD/SUBUNIDAD GEOMORFOLOGICA;ACRONIMO;SUSCEPTIBILIDAD;VALOR
+DENUDACIONAL;Cerro residual;Dcrs;Baja;0
+DENUDACIONAL;Cima;Dc;;
+DENUDACIONAL;Colina residual;Dcr;;
+DENUDACIONAL;Colina residual disectada;Dcrd;;
+DENUDACIONAL;Colina remanente;Dcre;;
+DENUDACIONAL;Colina remanente disectada;Dcred;;
+DENUDACIONAL;Colina remanente muy disectada;Dcremd;;
+DENUDACIONAL;Cono de talus;Dct;Alta;2
+DENUDACIONAL;Cono flujo de detritos;Dfe;Alta;2
+DENUDACIONAL;Cono y lóbulo coluvial y de solifluxión;Dco;;
+DENUDACIONAL;Cono o lóbulo de deslizamiento traslacional;Ddtr;;
+DENUDACIONAL;Cono o lóbulo de deslizamiento rotacional;Ddrt;;
+DENUDACIONAL;Cono o lóbulo de flujo de lodo;Dlf;;
+DENUDACIONAL;Conos o lóbulos de flujos de tierra;Dlft;;
+DENUDACIONAL;Cono o lóbulo de deslizamiento indiferenciado;Ddi;;
+DENUDACIONAL;Escarpe faceteado;Def;Alta;2
+DENUDACIONAL;Cono o lóbulo de Flujo indiferenciado;Dft;;
+DENUDACIONAL;Glacis;Dg;;
+DENUDACIONAL;Glacis de acumulación;Dga;;
+DENUDACIONAL;Glacis de erosión;Dge;;
+DENUDACIONAL;Lóbulo y cono de avalancha de detritos;Dlcad;;
+DENUDACIONAL;Lóbulo y cono de avalancha de rocas;Dlcar;;
+DENUDACIONAL;Inselberg;Di;;
+DENUDACIONAL;Lomas denudadas;Dld;;
+DENUDACIONAL;Lomas residuales;Dlor;;
+DENUDACIONAL;Lomo residual;Dlres;;
+DENUDACIONAL;Montículo y ondulaciones denudacionales;Dmo;;
+DENUDACIONAL;Penillanura o peniplanicie;Dpn;;
+DENUDACIONAL;Planicie colinada denudacional;Dpcd;;
+DENUDACIONAL;Planicie colinada residual;Dpcr;;
+DENUDACIONAL;Sierra denudada;Dsd;;
+DENUDACIONAL;Sierra residual;Dsr;;
+DENUDACIONAL;Superficie de erosión o aplanamiento;Dsa;;
+DENUDACIONAL;Altiplano;Da;;
+DENUDACIONAL;Planos aterrazados o duricostras;Dpad;;
+DENUDACIONAL;Pedimentos;Dpd;;
+DENUDACIONAL;Pedimentos de acumulación;Dpa;;
+DENUDACIONAL;Planicie;Dp;;
+DENUDACIONAL;Pedimentos de erosión;Dpe;;
+DENUDACIONAL;Terrazas o mesas calcretas o silicretas;Dtcs;;
+DENUDACIONAL;Cono flujos de detritos;Dfe;;
+DENUDACIONAL;Cono de talus;Dct;;
+DENUDACIONAL;Cerro remanente o relicto;Dcrem;Alta;2
+DENUDACIONAL;Escarpe de erosión mayor;Deem;Alta;2
+DENUDACIONAL;Escarpe de erosión menor;Deeme;Alta;2
+DENUDACIONAL;Escarpe facetado;Def;Alta;2
+FLUVIAL;Abanico aluvial antiguo;Faaa;;
+FLUVIAL;Abanicos aluviales y fluviotorrenciales;Faa;;
+FLUVIAL;Albardones fluviales o diques naturales;Fa;;
+FLUVIAL;Abanico aluvial subcreciente;Faas;;
+FLUVIAL;Abanico aluvial actual;Faaac;;
+FLUVIAL;Abanico aluvial incisado;Faai;;
+FLUVIAL;Abanicos aluviales coalescentes no diferenciados (bajadas);Fac;;
+FLUVIAL;Barra puntual;Fbp;;
+FLUVIAL;Barras longitudinales;Fbl;;
+FLUVIAL;Barras compuestas;Fbc;;
+FLUVIAL;Complejo de orillales;Fpac;;
+FLUVIAL;Planicie aluvial confinada;Fpac;;
+FLUVIAL;Planicies y deltas lacustrinos;Fpla;;
+FLUVIAL;Planos y llanuras de inundación;Fpi;;
+FLUVIAL;Planos anegadizos;Fpa;;
+FLUVIAL;Planos y artesas lagunares;Fpl;;
+FLUVIAL;Cauce aluvial;Fca;;
+FLUVIAL;Cono de deyección;Fcdy;;
+FLUVIAL;Cuencas de decantación fluvial;Fcd;;
+FLUVIAL;Meandros abandonados;Fma;;
+FLUVIAL;Lagos en media luna;Flm;;
+FLUVIAL;Deltas de desborde natural;Fdd;;
+FLUVIAL;Deltas lacustrinos;Fdl;;
+FLUVIAL;Terrazas de acumulación;Fta;;
+FLUVIAL;Terrazas de erosión fluvial;Fte;;
+FLUVIAL;Escarpe de terraza de acumulación;Ftae;;
+FLUVIAL;Terraza de acumulación subcreciente;Ftas;;
+FLUVIAL;Terraza de acumulación antigua;Ftan;;
+FLUVIAL;Escarpe de abanico fluvial;Fea;Alta;2
+FLUVIAL;Escarpe de terraza de erosión;Ftee;Alta;2
+FLUVIAL;Plano anegadizo;Fpa;;
+ESTRUCTURAL;Cerro estructural;Sce;Alta;2
+ESTRUCTURAL;Colina estructural ;Sces;Alta;2
+ESTRUCTURAL;Escarpe de línea de falla;Slfe;Alta;2
+ESTRUCTURAL;Escarpe de meseta estructural ;Sme;Alta;2
+ESTRUCTURAL;Faceta triangular; Sft;Alta;2
+ESTRUCTURAL;Ladera contrapendiente ;Slcp;Alta;2
+ESTRUCTURAL;Ladera de contrapendiente de sierra homoclinal ;Sshlc;Alta;2
+ESTRUCTURAL;Ladera contrapendiente de sierra anticlinal ;Ssalc;Alta;2
+ESTRUCTURAL;Ladera contrapendiente de sierra sinclinal ;Ssslc;Alta;2
+ESTRUCTURAL;Ladera estructural de cuestas;Scle;;
+ESTRUCTURAL;Ladera de contrapendiente de cuesta; Sclc;Alta;2
+ESTRUCTURAL;Ladera de contrapendiente de espinazo ;Selc;Alta;2
+ESTRUCTURAL;Meseta estructural ;Sm;Alta;2
+ESTRUCTURAL;Ladera estructural de sierra homoclinal ;Sshle;Alta;2
+ESTRUCTURAL;Ladera estructural de sierra anticlinal ;Ssale;Alta;2
+ESTRUCTURAL;Ladera estructural de sierra sinclinal ;Sssle;Alta;2
+ESTRUCTURAL;Ladera estructural de cuesta ;Scle;Alta;2
+ESTRUCTURAL;Ladera estructural de espinazo; Sele;Alta;2
+ESTRUCTURAL;Ladera de contrapendiente de espinazo;Selp;Alta;2
+ESTRUCTURAL;Plancha; Sp;Alta;2
+ESTRUCTURAL;Sierra de barras estructurales ;Ssbe;Alta;2
+ESTRUCTURAL;Barras homoclinales denudadas;Sbhd;;
+ESTRUCTURAL;Cornisas estructurales;Scor;;
+ESTRUCTURAL;Cerros estructurales;Sce;;
+ESTRUCTURAL;Espolones estructurales;Spe;Alta;2
+ESTRUCTURAL;Espolones faceteados;Sefc;Alta;2
+ESTRUCTURAL;Espolones denudados;Sed;;
+ESTRUCTURAL;Espolones festoneados;sefes;;
+ESTRUCTURAL;Lomos de fallas con facetas triangulares;Slft;;
+ESTRUCTURAL;Escarpe de línea de falla;Slfe;Alta;2
+;Escarpe de falla importante;Sefi;Alta;2
+ESTRUCTURAL;Sierras y lomos de presión;Slp;;
+ESTRUCTURAL;Ganchos de flexión;Sgf;;
+ESTRUCTURAL;Domo diapírico;Sdd;;
+ESTRUCTURAL;Superficie tabular de meseta;Smle;;
+ESTRUCTURAL;Escarpes de meseta;Smcp;Alta;2
+ESTRUCTURAL;Cuencas de tracción;Sct;;
+ESTRUCTURAL;Laderas escalonadas;Sles;;
+ESTRUCTURAL;Laguna de falla;Ssp;;
+ESTRUCTURAL;Lomo de obturación;Slo;;
+ESTRUCTURAL;Planos aluviales confinados;Svc;;
+ESTRUCTURAL;Terrazas o bermas de fallamiento;Sbf;;
+ESTRUCTURAL;Volcanes de lodo;Svl;;
+VOLCÁNICO;Caldera;Vcr;;
+VOLCÁNICO;Campo de hummocks;Vch;;
+VOLCÁNICO;Campo fumarólico;Vcf;;
+VOLCÁNICO;Cono de escoria o cono de ceniza;Vcoe;;
+VOLCÁNICO;Cono Lahárico;Vcl;;
+VOLCÁNICO;Cráter volcánico;Vc;;
+VOLCÁNICO;Domo volcánico;Vdr;;
+VOLCÁNICO;Escarpe de cráter;Vce;Alta;2
+VOLCÁNICO;Escarpe de flujo lahárico aterrazado;Vflae;;
+VOLCÁNICO;Escarpe de flujo piroclástico aterrazado;Vfpe;;
+VOLCÁNICO;Estratovolcán ó cono compuesto;Vee;;
+VOLCÁNICO;Flujo de lava;Vfl;;
+VOLCÁNICO;Flujo de lava almohadillada;Vflal;;
+VOLCÁNICO;Flujo de lava cordada;Vflc;;
+VOLCÁNICO;Flujo de lava en bloque;Vflaa;;
+VOLCÁNICO;Flujo lahárico aterrazado;Vfla;;
+VOLCÁNICO;Flujo piroclástico aterrazado;Vfp;;
+VOLCÁNICO;Laguna volcánica;Vlg;;
+VOLCÁNICO;Maar;Vm;;
+VOLCÁNICO;Manto de piroclastos;Vmp;;
+VOLCÁNICO;Volcán escudo;Ves;;
+VOLCÁNICO;Volcán o edificio volcánico;Ve;;
+VOLCÁNICO;Escarpe de flujo de lava (Vfle);Vfle;Alta;2
+VOLCÁNICO;Ladera volcánica (Vl);Vl;Alta;2
+VOLCÁNICO;Lóbulo de flujo lahárico;Vlfp;;
+VOLCÁNICO;Lóbulo de flujo piroclástico;Vlfl;;
+GLACIAR;Drumlin;Gd;;
+GLACIAR;Aguja glaciar;Ga;;
+GLACIAR;Espolón estructural glaciado;Gee;Alta;2
+GLACIAR;Circo glaciar y de nivación;Gc;;
+GLACIAR;Cuesta estructural glaciada;Gce;;
+GLACIAR;Ladera estructural de cuesta estructural glaciada;Gclc;;
+GLACIAR;Ladera contrapendiente de cuesta estructural glaciada;Gclc;Alta;2
+GLACIAR;Sierra homoclinal glaciada;Gshg;;
+GLACIAR;Ladera en contrapendiente de sierra homoclinal glaciada;Gshlc;Alta;2
+GLACIAR;Ladera estructural de sierra homoclinal glaciada;Gshle;;
+GLACIAR;Espolón estructural glaciado;Gee;Alta;2
+GLACIAR;Laguna Glaciar;Glg;;
+GLACIAR;Morrena lateral;Gml;;
+GLACIAR;Morrena terminal o frontales;Gmt;;
+GLACIAR;Conos glaciofluviales;Gcgf;;
+GLACIAR;Cono y lóbulo de gelifracción;Gclg;;
+GLACIAR;Morrena de ablación;Gma;;
+GLACIAR;Morrena de fondo;Gmf;;
+GLACIAR;Kame y Terraza de gelifracción;Gktg;;
+GLACIAR;Esker;Ge;;
+GLACIAR;Flancos de valle Glaciar;Gflv;;
+GLACIAR;Masa Glaciar;Gmg;;
+GLACIAR;Ladera contrapendiente de sierra homoclinal glaciada;Gshlc;Alta;2
+GLACIAR;Ladera contrapendiente de sierra anticlinal glaciada;Gsalc;Alta;2
+GLACIAR;Ladera contrapendiente de sierra sinclinal glaciada;Gsslc;Alta;2
+GLACIAR;Ladera contrapendiente de cuesta estructural glaciada;Gclc;Alta;2
+GLACIAR;Ladera de contrapendiente de espinazo glaciado;Geglc;Alta;2
+GLACIAR;Ladera estructural de sierra homoclinal glaciada;Gshle;Alta;2
+GLACIAR;Ladera estructural de sierra anticlinal glaciada;Gsale;Alta;2
+GLACIAR;Ladera estructural de cuesta estructural glaciada;Gcle;Alta;2
+GLACIAR;Ladera estructural de espinazo glaciado;Gegle;Alta;2
+GLACIAR;Flujo volvánico glaciado;Gfv;;
+CÁRSTICO;Dolina;Kd;;
+CÁRSTICO;Uvala;Ku;;
+CÁRSTICO;Poljes;Kp;;
+CÁRSTICO;Simas;Ks;;
+CÁRSTICO;Valle ciego;Kvc;;
+CÁRSTICO;Valle cástico;Kvca;;
+CÁRSTICO;Cuesta con carstificación;Kcc;;
+CÁRSTICO;Ladera de contrapendiente de cuesta con carstifiación;Klc;Alta;2
+CÁRSTICO;Meseta carstificada;Km;;
+CÁRSTICO;Talus por disolucion;Kec;Alta;2
+CÁRSTICO;Lomos de carstificación;Kcr;;
+CÁRSTICO;Planos encañonados por carstificación;Kcñ;;
+CÁRSTICO;Torres cársticas;Kt;;
+CÁRSTICO;Escarpe cárstico;Kec;Alta;2
+MARINO COSTERO;Acantilado;Ma;Alta;2
+MARINO COSTERO;Abanico de sobrelavado;Mas;;
+MARINO COSTERO;Bajos arrecifales;Mba;;
+MARINO COSTERO;Barra espiga o Barrera;Mbe;;
+MARINO COSTERO;Barras litorales;Mbl;;
+MARINO COSTERO;Beachrocks;Mbr;;
+MARINO COSTERO;Canales intermareales;Mci;;
+MARINO COSTERO;Complejo de crestas y artesas de playa;Mcpy;;
+MARINO COSTERO;Complejos de crestas y artesas de playa;Mcc;;
+MARINO COSTERO;Delta de flujo de marea;Mdf;;
+MARINO COSTERO;Delta de reflujo de marea;Mdr;;
+MARINO COSTERO;Delta de sobrelavado de playas;Mds;;
+MARINO COSTERO;Espiga;Me;;
+MARINO COSTERO;Isla;Mi;;
+MARINO COSTERO;Laguna costera;Mlc;;
+MARINO COSTERO;Llanura intermareal;Mlli;;
+MARINO COSTERO;Llanuras deltaicas subrecientes;Mdps;;
+MARINO COSTERO;Lóbulos y planos deltaicos actuales;Mdpd;;
+MARINO COSTERO;Pilares;Mplr;;
+MARINO COSTERO;Planos de inundación;Mpi;;
+MARINO COSTERO;Planos y llanuras con vegetación halófila;Mpv;;
+MARINO COSTERO;Plataforma de abrasión;Mpa;;
+MARINO COSTERO;Playas;Mpl;;
+MARINO COSTERO;Terrazas marinas;Mtm;;
+MARINO COSTERO;Tómbolo;Mtc;;
+EÓLICO;Barjanes o Barchanes;Eb;;
+EÓLICO;Campo de dunas de sombra;Eds;;
+EÓLICO;Campo de dunas remontantes;Edr;;
+EÓLICO;Dunas;Edu;;
+EÓLICO;Dunas antiguas;Edua;;
+EÓLICO;Dunas costeras sin diferenciar;Edin;;
+EÓLICO;Dunas Longtudinales;Edl;;
+EÓLICO;Dunas parabólicas;Edp;;
+EÓLICO;Dunas Transversales;Edtr;;
+EÓLICO;Mantos de arena eólica;Ema;;
+EÓLICO;Mantos de Loess;Eml;;
+EÓLICO;Superficies de deflación;Esd;;
+ANTRÓPICO;Canteras ;Ac;Alta;2
+ANTRÓPICO;Explotación minera;Aemc;Alta;2
+ANTRÓPICO;Rellenos de basuras;Arb;;
+ANTRÓPICO;Canal Artificial;Aca;;
+ANTRÓPICO;Canteras;Ac;Alta;2
+ANTRÓPICO;Embalses;Aemb;;
+ANTRÓPICO;Excavaciones;Ase;Alta;2
+ANTRÓPICO;Planos y campos de llenos antrópicos;Ar;;
+ANTRÓPICO;Plantas de tratamiento de aguas residuales;Apt;;
+ANTRÓPICO;Presa;Ap;;
+ANTRÓPICO;Rellenos de escombros;Are;;
+ANTRÓPICO;Represas;Arp;;
+ANTRÓPICO;Salinas;Asa;;
+ANTRÓPICO;Superficies de explanación;Asp;;
+ANTRÓPICO;Terrazas agrícolas;Ata;;
+;Cerro antropico;Ca;Baja;0
+;Coluvión;C;Baja;0
+;Concavidad ;Co;Baja;0
+;Concavidad Coluvial;Cc;Baja;0
+;Concavidad en Coluviones Activos;CcA;Baja;0
+;Cuchilla;Cu;Media;1
+;Cuchilla Residual;Cr;Media;1
+;Digitación Coluvial;Dc;Baja;0
+;Entrante de Disección;Ed;Baja;0
+;Escalon;Es;Baja;0
+;Escarpe;E;Alta;2
+;Escarpe de Disección;Ed;Baja;0
+;Escarpe Rocoso;Er;Alta;2
+;Espaldón;Es;Media;1
+;Ladera Coluvial Rectilínea;LcR;Baja;0
+;Ladera Rectilínea;Lr;Baja;0
+;Ladera Triangular Rectilinea;LtR;Baja;0
+;Laderas con Estratificación Inclinada;Lel;Baja;0
+;Nicho de Despegue;Nd;Alta;2
+;Plano;P;Baja;0
+;Semiplano Coluvial;Sc;Baja;0
+;Terraza Aluvial;Ta;Baja;0
+;Tope de Meseta;Tm;Baja;0
+;Umbral;U;Baja;0
+;Valle Aluvial;Va;Baja;0
+;Valle Colgado;Vc;Baja;0
+;Valle de Disección;Vd;Baja;0
