@@ -1,7 +1,7 @@
 [general]
-name = Landslides_Assessment-SGC
-description = Landslides_Assessment-SGC plugin
+name = PlugSARM
+description = PlugSARM plugin
 version = 0.1
 qgisMinimumVersion = 3.0
 author = Nicole Alejandra Rodríguez Vargas
-email = nicole.rodriguez@correo.uis.edu.co
+email = nicolerodriguez.02@hotmail.com

@@ -19,9 +19,9 @@ import math
 import gdal
 import os
 
-DialogBase, DialogType = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'Landslides_Assessment_SGC.ui'))
+DialogBase, DialogType = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'PlugSARM.ui'))
 
-class LandslidesAssessmentSGCDialog(DialogType, DialogBase):
+class PlugSARMDialog(DialogType, DialogBase):
 
     def __init__(self, parent=None):
         super().__init__(parent)

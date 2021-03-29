@@ -10,8 +10,8 @@
 # (at your option) any later version.
 # ---------------------------------------------------------------------
 
-from .Landslides_Assessment_SGC_plugin import LandslidesPlugin
+from .PlugSARM_plugin import PlugSARMPlugin
 
 
 def classFactory(iface):
-    return LandslidesPlugin(iface)
+    return PlugSARMPlugin(iface)

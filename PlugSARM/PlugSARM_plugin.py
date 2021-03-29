@@ -13,14 +13,14 @@
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from .Landslides_Assessment_SGC_dialog import LandslidesAssessmentSGCDialog
+from .PlugSARM_dialog import PlugSARMDialog
 
-class LandslidesPlugin:
+class PlugSARMPlugin:
     def __init__(self, iface):
         self.iface = iface
 
     def initGui(self):
-        self.action = QAction(u'SGC', self.iface.mainWindow())
+        self.action = QAction(u'PlugSARM', self.iface.mainWindow())
         self.action.triggered.connect(self.run)
         self.iface.addToolBarIcon(self.action)
 
@@ -29,7 +29,7 @@ class LandslidesPlugin:
         del self.action
 
     def run(self):
-        dialog = LandslidesAssessmentSGCDialog()
+        dialog = PlugSARMDialog()
 
         dialog.exec_()
 
