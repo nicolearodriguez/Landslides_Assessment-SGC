@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>LandslidesAssessmentSGC</class>
- <widget class="QDialog" name="LandslidesAssessmentSGC">
+ <class>PlugSARM</class>
+ <widget class="QDialog" name="PlugSARM">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Landslides Assessment SGC</string>
+   <string>PlugSARM</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="0" colspan="2">
